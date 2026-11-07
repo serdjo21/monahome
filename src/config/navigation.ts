@@ -12,6 +12,6 @@ export const mainNav: NavLink[] = [
 ];
 
 export const socialLinks = [
-  { href: "https://www.instagram.com/monahome", label: "Instagram" },
-  { href: "https://www.tiktok.com/@monahome", label: "TikTok" },
+  { href: "https://www.instagram.com/monahome.rs", label: "Instagram" },
+  { href: "https://www.tiktok.com/@monahome.rs", label: "TikTok" },
 ] as const;
