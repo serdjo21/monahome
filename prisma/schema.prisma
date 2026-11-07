@@ -1,0 +1,222 @@
+// monahome — šema baze (faza 1: katalog, kampanje, početna)
+// Porudžbine, nalozi i affiliate program dolaze u sledećim fazama.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Katalog ────────────────────────────────────────────────
+
+/// Soba (kategorija u navigaciji): Dnevna soba, Spavaća soba, Kupatilo, Kuhinja.
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  /// Fotografija za blok kategorija na početnoj (Supabase Storage putanja).
+  imagePath   String?
+  imageAlt    String?
+  position    Int      @default(0)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products ProductCategory[]
+
+  @@index([isVisible, position])
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  name         String
+  /// Kratka linija ispod imena: tip proizvoda ili materijal.
+  subtitle     String?
+  description  String?
+  /// Sastav i nega (pranje, sušenje), prikazuje se na stranici proizvoda.
+  care         String?
+  /// Osnovna cena u dinarima, celobrojno (bez para).
+  priceRsd     Int
+  /// Prethodna cena za prikaz sezonske cene; null kad nema popusta.
+  compareAtRsd Int?
+  status       ProductStatus @default(DRAFT)
+  isNew        Boolean       @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  images     ProductImage[]
+  variants   ProductVariant[]
+  categories ProductCategory[]
+  campaigns  CampaignProduct[]
+
+  @@index([status, publishedAt])
+}
+
+/// Proizvod može da stoji u više soba (pled: dnevna i spavaća).
+model ProductCategory {
+  productId  String
+  categoryId String
+  position   Int    @default(0)
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId, position])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  path      String
+  alt       String
+  position  Int     @default(0)
+  /// Varijanta (boja) na koju se fotografija odnosi; null = važi za sve.
+  variantId String?
+
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([productId, position])
+}
+
+/// Lager se vodi po varijanti (boja × veličina), nikad po proizvodu.
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  sku       String  @unique
+  colorName String?
+  colorHex  String?
+  size      String?
+  /// Cena varijante kad se razlikuje od osnovne (veći peškir).
+  priceRsd  Int?
+  stock     Int     @default(0)
+  /// Količina zadržana za porudžbine koje još nisu isporučene.
+  reserved  Int     @default(0)
+  position  Int     @default(0)
+  isActive  Boolean @default(true)
+
+  product Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images  ProductImage[]
+
+  @@unique([productId, colorName, size])
+  @@index([productId, position])
+}
+
+// ─── Kampanje i početna ─────────────────────────────────────
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  ARCHIVED
+}
+
+enum HeroLayout {
+  /// Tekst levo, fotografija desno.
+  SPLIT
+  /// Fotografija preko cele širine, tekst u traci ispod.
+  FULL_BLEED
+}
+
+enum SectionTheme {
+  KAMEN
+  ESPRESO
+}
+
+/// Kampanja pokreće hero, karusel i editorijalni blok početne.
+/// Aktivna je ona SCHEDULED kampanja čiji period obuhvata trenutni trenutak;
+/// ako takve nema, prikazuje se kampanja označena kao podrazumevana.
+model Campaign {
+  id        String         @id @default(cuid())
+  slug      String         @unique
+  /// Interni naziv u adminu.
+  name      String
+  status    CampaignStatus @default(DRAFT)
+  isDefault Boolean        @default(false)
+  startsAt  DateTime?
+  endsAt    DateTime?
+
+  // Hero
+  season              String
+  headline            String
+  intro               String
+  ctaLabel            String
+  ctaHref             String
+  layout              HeroLayout   @default(SPLIT)
+  theme               SectionTheme @default(ESPRESO)
+  heroImagePath       String?
+  heroImageMobilePath String?
+  heroImageAlt        String?
+  /// Tačka fokusa za isecanje, u procentima (0–100).
+  focalX              Int          @default(50)
+  focalY              Int          @default(50)
+
+  // Editorijalni blok
+  editorialTitle     String?
+  editorialText      String?
+  editorialImagePath String?
+  editorialImageAlt  String?
+
+  /// Tajni token za pregled pre objave.
+  previewToken String   @unique @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  products CampaignProduct[]
+
+  @@index([status, startsAt, endsAt])
+}
+
+model CampaignProduct {
+  campaignId String
+  productId  String
+  position   Int    @default(0)
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, productId])
+  @@index([campaignId, position])
+}
+
+enum HomeSectionType {
+  HERO
+  COLLECTION_CAROUSEL
+  ROOMS
+  EDITORIAL
+  PRODUCT_GRID
+  BRAND_STORY
+  GIFTS
+  SOCIAL
+  NEWSLETTER
+}
+
+/// Redosled i vidljivost sekcija početne; tipovi su fiksni da dizajn ne može da se pokvari.
+model HomeSection {
+  type      HomeSectionType @id
+  isEnabled Boolean         @default(true)
+  position  Int
+  /// Podešavanja specifična za sekciju (npr. PRODUCT_GRID: { "source": "new" | "bestsellers" }).
+  settings  Json?
+  updatedAt DateTime        @updatedAt
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String?
+  createdAt DateTime @default(now())
+}
