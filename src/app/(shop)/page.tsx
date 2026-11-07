@@ -10,7 +10,7 @@ export default function Page() {
       <p className="eyebrow text-ink-muted">Jesen / zima 2026</p>
       <h1 className="font-display text-display-1 italic">Toplina koja se oseća.</h1>
       <p className="max-w-md text-body-lg text-ink-muted">
-        Čćšžđ test: pledovi od vune, lan u slojevima i teški pamuk.
+        Čćšžđ tes: pledovi od vune, lan u slojevima i teški pamuk.
       </p>
       <section data-theme="espreso" className="p-10">
         <p className="label">Espreso sekcija</p>

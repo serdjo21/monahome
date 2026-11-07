@@ -11,6 +11,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Ne diraj Next interne fajlove, slike, ikonice i fajlove sa ekstenzijom.
+  // Ne diraj Next interne fajlove, slike, ikonice i fajlove sa eksten
   matcher: ["/((?!_next/|api/|favicon.ico|icon.png|apple-icon.png|.*\\..*).*)"],
 };
