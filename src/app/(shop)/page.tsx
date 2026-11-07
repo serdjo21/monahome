@@ -1,21 +1,31 @@
-import { Monogram, Wordmark } from "@/components/brand/logo";
+import { cacheLife } from "next/cache";
 
-export default function Page() {
+import { prisma } from "@/server/db";
+
+async function getTestData() {
+  "use cache";
+  cacheLife("seconds");
+  const [products, campaign] = await Promise.all([
+    prisma.product.findMany({ orderBy: { name: "asc" }, select: { name: true, priceRsd: true } }),
+    prisma.campaign.findFirst({ where: { isDefault: false }, select: { headline: true } }),
+  ]);
+  return { products, campaign };
+}
+
+export default async function Page() {
+  const { products, campaign } = await getTestData();
   return (
-    <main className="container-page flex flex-col gap-6 py-section">
-      <div className="flex items-center gap-6">
-  <Wordmark className="h-8 w-auto text-ink" />
-  <Monogram className="size-12" />
-</div>
-      <p className="eyebrow text-ink-muted">Jesen / zima 2026</p>
-      <h1 className="font-display text-display-1 italic">Toplina koja se oseća.</h1>
-      <p className="max-w-md text-body-lg text-ink-muted">
-        Čćšžđ tes: pledovi od vune, lan u slojevima i teški pamuk.
-      </p>
-      <section data-theme="espreso" className="p-10">
-        <p className="label">Espreso sekcija</p>
-        <p className="mt-3 font-display text-display-3">Boje se same obrnu.</p>
-      </section>
-    </main>
+    <div className="container-page flex flex-col gap-6 py-section">
+      <p className="eyebrow text-ink-muted">Test baze</p>
+      <h1 className="font-display text-display-1 italic">{campaign?.headline ?? "Nema kampanje"}</h1>
+      <ul className="flex flex-col gap-2">
+        {products.map((p) => (
+          <li key={p.name} className="flex justify-between border-b border-hairline py-2">
+            <span>{p.name}</span>
+            <span>{p.priceRsd} RSD</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
