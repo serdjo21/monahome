@@ -4,7 +4,7 @@ import { prisma } from "@/server/db";
 
 async function getTestData() {
   "use cache";
-  cacheLife("seconds");
+  cacheLife("minutes");
   const [products, campaign] = await Promise.all([
     prisma.product.findMany({ orderBy: { name: "asc" }, select: { name: true, priceRsd: true } }),
     prisma.campaign.findFirst({ where: { isDefault: false }, select: { headline: true } }),
