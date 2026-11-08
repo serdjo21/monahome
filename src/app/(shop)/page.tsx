@@ -1,25 +1,46 @@
-import { getActiveCampaign, getHomeSections, getRooms } from "@/server/storefront";
+import { Fragment } from "react";
 
-export default async function Page() {
-  const [campaign, rooms, sections] = await Promise.all([getActiveCampaign(), getRooms(), getHomeSections()]);
+import { Hero } from "@/components/home/hero";
+import { getHomeSections } from "@/server/storefront";
+import type { HomeSection } from "@/server/storefront/types";
+import { CollectionCarousel } from "@/components/home/collection-carousel";
+import { Rooms } from "@/components/home/rooms";
+import { ca } from "zod/locales";
+import { Editorial } from "@/components/home/editorial";
+import { ProductGrid } from "@/components/home/product-grid";
+import { BrandStory } from "@/components/home/brand-story";
+import { Gifts } from "@/components/home/gifts";
+import { Newsletter } from "@/components/home/newsletter";
+import { Social } from "@/components/home/social";
 
-  return (
-    <div className="container-page flex flex-col gap-8 py-section">
-      <div>
-        <p className="eyebrow text-ink-muted">{campaign.season}</p>
-        <h1 className="font-display text-display-1 italic">{campaign.headline}</h1>
-      </div>
-      <p className="text-body-lg text-ink-muted">Sobe: {rooms.map((r) => r.name).join(" · ")}</p>
-      <p className="text-body-lg text-ink-muted">Sekcije: {sections.map((s) => s.type).join(" → ")}</p>
-      <ul className="flex flex-col">
-        {campaign.products.map((p) => (
-          <li key={p.id} className="flex justify-between border-b border-hairline py-2">
-            <span>{p.name}</span>
-            <span>{p.colors.map((c) => c.name).join(", ") || p.meta}</span>
-            <span>{p.priceRsd} RSD</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+function renderSection(section: HomeSection) {
+  switch (section.type) {
+    case "hero":
+      return <Hero />;
+    case "collection-carousel":
+      return <CollectionCarousel />;
+    case "rooms":
+      return <Rooms />;
+        case "editorial":
+      return <Editorial />;
+        case "product-grid":
+      return <ProductGrid source={section.source} />;
+        case "brand-story":
+      return <BrandStory />;
+      case "gifts":
+      return <Gifts content={section.content} />;
+          case "social":
+      return <Social content={section.content} />;
+    case "newsletter":
+      return <Newsletter />;
+    // Sledeće sekcije dodajemo redom: karusel, sobe, editorijal, mreža, priča, pokloni, mreže, novosti.
+    default:
+      return null;
+  }
+}
+
+/** Početna: redosled i vidljivost sekcija dolaze iz admina (Početna → Sekcije). */
+export default async function HomePage() {
+  const sections = await getHomeSections();
+  return sections.map((section) => <Fragment key={section.type}>{renderSection(section)}</Fragment>);
 }

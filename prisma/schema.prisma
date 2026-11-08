@@ -129,6 +129,9 @@ enum HeroLayout {
   SPLIT
   /// Fotografija preko cele širine, tekst u traci ispod.
   FULL_BLEED
+  /// Fotografija ispunjava ceo hero, tekst stoji preko nje (uz zatamnjenje radi čitljivosti).
+  /// Bez fotografije sajt se vraća na SPLIT.
+  OVERLAY
 }
 
 enum SectionTheme {

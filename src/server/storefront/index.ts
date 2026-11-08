@@ -6,7 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/server/db";
 
 import { toMedia } from "./media";
-import type { Campaign, ColorSwatch, HomeSection, ProductSummary, Room } from "./types";
+import type { Campaign, ColorSwatch, GiftsContent, HomeSection, ProductSummary, Room, SocialContent } from "./types";
 
 /**
  * Javni sloj podataka prodavnice. Komponente zovu samo ove funkcije, nikad Prismu direktno.
@@ -159,6 +159,11 @@ export async function getActiveCampaign(): Promise<Campaign> {
 
   const focal = { x: row.focalX, y: row.focalY };
   const heroAlt = row.heroImageAlt ?? row.headline;
+  const image = { ...toMedia(row.heroImagePath, heroAlt), focal };
+
+  // „Slika preko“ ima smisla samo kad slika postoji; bez nje hero se vraća na boju (split).
+  const layout =
+    row.layout === "OVERLAY" ? (image.src ? "overlay" : "split") : row.layout === "FULL_BLEED" ? "full-bleed" : "split";
 
   return {
     slug: row.slug,
@@ -166,9 +171,9 @@ export async function getActiveCampaign(): Promise<Campaign> {
     headline: row.headline,
     intro: row.intro,
     cta: { label: row.ctaLabel, href: row.ctaHref },
-    layout: row.layout === "FULL_BLEED" ? "full-bleed" : "split",
+    layout,
     theme: row.theme === "ESPRESO" ? "espreso" : "kamen",
-    image: { ...toMedia(row.heroImagePath, heroAlt), focal },
+    image,
     imageMobile: row.heroImageMobilePath ? { ...toMedia(row.heroImageMobilePath, heroAlt), focal } : null,
     editorial:
       row.editorialTitle && row.editorialText
@@ -185,6 +190,66 @@ export async function getActiveCampaign(): Promise<Campaign> {
 
 // ─── Početna ────────────────────────────────────────────────
 
+/** Čita tekstualno polje iz podešavanja sekcije (JSON); prazno ili nepostojeće → podrazumevano. */
+function text(settings: Record<string, unknown>, key: string, fallback: string): string {
+  const value = settings[key];
+  return typeof value === "string" && value.trim() !== "" ? value : fallback;
+}
+
+function toGiftsContent(settings: Record<string, unknown>): GiftsContent {
+  const title = text(settings, "title", "Ritual za dvoje");
+  return {
+    eyebrow: text(settings, "eyebrow", "Pokloni"),
+    title,
+    text: text(
+      settings,
+      "text",
+      "Dve ručno glazirane šolje i laneni peškir, spakovani u kutiju sa monogramom. Spremno za poklon.",
+    ),
+    cta: { label: text(settings, "ctaLabel", "Pogledaj poklone"), href: text(settings, "ctaHref", "/pokloni") },
+    image: toMedia(
+      text(settings, "imagePath", ""),
+      text(settings, "imageAlt", "Poklon kutija sa monogramom, unutra dve šolje i složen peškir, svilena traka"),
+      title,
+    ),
+  };
+}
+
+const INSTAGRAM_URL = "https://www.instagram.com/monahome.rs";
+
+/** Probni kadrovi dok u adminu nisu dodate prave objave. */
+const SOCIAL_PLACEHOLDERS = [
+  "Šolja na prozoru, jutarnje svetlo",
+  "Slaganje peškira na drvenoj stolici",
+  "Pled na krevetu, nedeljno jutro",
+  "Detalj glazure šolje",
+  "Jutarnji ritual: kafa i lan",
+  "Kupatilo u kamenu, složeni peškiri",
+];
+
+function toSocialContent(settings: Record<string, unknown>): SocialContent {
+  const raw = Array.isArray(settings.posts) ? settings.posts : [];
+  const posts = raw
+    .filter((post): post is Record<string, unknown> => typeof post === "object" && post !== null)
+    .map((post, index) => ({
+      id: `post-${index}`,
+      image: toMedia(text(post, "imagePath", ""), text(post, "imageAlt", "Objava sa Instagrama")),
+      href: text(post, "href", INSTAGRAM_URL),
+    }));
+
+  return {
+    handle: text(settings, "handle", "@monahome.rs"),
+    posts:
+      posts.length > 0
+        ? posts.slice(0, 6)
+        : SOCIAL_PLACEHOLDERS.map((alt, index) => ({
+            id: `placeholder-${index}`,
+            image: { src: null, alt },
+            href: INSTAGRAM_URL,
+          })),
+  };
+}
+
 /** Uključene sekcije početne, redom iz admina (Početna → Sekcije). */
 export async function getHomeSections(): Promise<HomeSection[]> {
   "use cache";
@@ -197,6 +262,11 @@ export async function getHomeSections(): Promise<HomeSection[]> {
   });
 
   return rows.map((row): HomeSection => {
+    const settings =
+      row.settings && typeof row.settings === "object" && !Array.isArray(row.settings)
+        ? (row.settings as Record<string, unknown>)
+        : {};
+
     switch (row.type) {
       case "HERO":
         return { type: "hero" };
@@ -206,16 +276,14 @@ export async function getHomeSections(): Promise<HomeSection[]> {
         return { type: "rooms" };
       case "EDITORIAL":
         return { type: "editorial" };
-      case "PRODUCT_GRID": {
-        const settings = row.settings as { source?: unknown } | null;
-        return { type: "product-grid", source: settings?.source === "bestsellers" ? "bestsellers" : "new" };
-      }
+      case "PRODUCT_GRID":
+        return { type: "product-grid", source: settings.source === "bestsellers" ? "bestsellers" : "new" };
       case "BRAND_STORY":
         return { type: "brand-story" };
       case "GIFTS":
-        return { type: "gifts" };
+        return { type: "gifts", content: toGiftsContent(settings) };
       case "SOCIAL":
-        return { type: "social" };
+        return { type: "social", content: toSocialContent(settings) };
       case "NEWSLETTER":
         return { type: "newsletter" };
     }

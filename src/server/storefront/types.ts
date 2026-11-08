@@ -36,7 +36,7 @@ export type Room = {
   image: Media;
 };
 
-export type HeroLayout = "split" | "full-bleed";
+export type HeroLayout = "split" | "full-bleed" | "overlay";
 
 export type Campaign = {
   slug: string;
@@ -57,6 +57,21 @@ export type Campaign = {
   products: ProductSummary[];
 };
 
+/** Sadržaj sekcije Pokloni; uređuje se u adminu (Početna → Sekcije → Pokloni). */
+export type GiftsContent = {
+  eyebrow: string;
+  title: string;
+  text: string;
+  cta: { label: string; href: string };
+  image: Media;
+};
+
+/** Sadržaj sekcije Instagram/TikTok; uređuje se u adminu (Početna → Sekcije → Mreže). */
+export type SocialContent = {
+  handle: string;
+  posts: Array<{ id: string; image: Media; href: string }>;
+};
+
 export type HomeSection =
   | { type: "hero" }
   | { type: "collection-carousel" }
@@ -64,6 +79,6 @@ export type HomeSection =
   | { type: "editorial" }
   | { type: "product-grid"; source: "new" | "bestsellers" }
   | { type: "brand-story" }
-  | { type: "gifts" }
-  | { type: "social" }
+  | { type: "gifts"; content: GiftsContent }
+  | { type: "social"; content: SocialContent }
   | { type: "newsletter" };
