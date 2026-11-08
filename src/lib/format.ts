@@ -7,3 +7,15 @@ const rsd = new Intl.NumberFormat("sr-Latn-RS", {
 export function formatRsd(amount: number): string {
   return `${rsd.format(Math.round(amount))} RSD`;
 }
+
+const plural = new Intl.PluralRules("sr-Latn-RS");
+
+/**
+ * Broj sa pravilnim oblikom reči: 1 proizvod, 3 proizvoda, 12 proizvoda, 21 proizvod.
+ * Oblici: [jedan, nekoliko (2–4), mnogo].
+ */
+export function formatCount(count: number, [one, few, many]: [string, string, string]): string {
+  const rule = plural.select(count);
+  const word = rule === "one" ? one : rule === "few" ? few : many;
+  return `${count} ${word}`;
+}

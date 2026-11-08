@@ -72,6 +72,20 @@ export type SocialContent = {
   posts: Array<{ id: string; image: Media; href: string }>;
 };
 
+/** Soba sa svim što prikazuje njena stranica: hero i editorijal prekid u mreži. */
+export type RoomDetail = Room & {
+  hero: {
+    /** Bez slike: boja bloka. Sa slikom tekst je uvek svetao preko tamnog prelaza. */
+    theme: Theme;
+    image: Media | null;
+    imageMobile: Media | null;
+  };
+  editorial: { text: string; image: Media } | null;
+};
+
+/** Sortiranje proizvoda u sobi; vrednost ide u URL kao ?sort=... */
+export type RoomSort = "preporuceno" | "najnovije" | "cena-rastuce" | "cena-opadajuce";
+
 export type HomeSection =
   | { type: "hero" }
   | { type: "collection-carousel" }
@@ -88,4 +102,36 @@ export type HomeSection =
   label: string;
   /** Kratak opis ispod naziva u mobilnom meniju. */
   note?: string;
+};
+
+export type ProductVariantOption = {
+  id: string;
+  sku: string;
+  colorName: string | null;
+  size: string | null;
+  /** Cena varijante, ili osnovna cena proizvoda kad varijanta nema svoju. */
+  priceRsd: number;
+  /** Na stanju minus rezervisano za neisporučene porudžbine. */
+  available: number;
+};
+
+/** Fotografija proizvoda; colorName vezuje sliku za boju (null = važi za sve boje). */
+export type ProductImageItem = Media & { colorName: string | null };
+
+export type ProductDetail = {
+  id: string;
+  slug: string;
+  name: string;
+  subtitle: string | null;
+  description: string | null;
+  care: string | null;
+  priceRsd: number;
+  compareAtRsd: number | null;
+  isNew: boolean;
+  /** Prva soba proizvoda, za putanju i „Iz iste sobe“. */
+  room: { slug: string; name: string } | null;
+  images: ProductImageItem[];
+  colors: ColorSwatch[];
+  sizes: string[];
+  variants: ProductVariantOption[];
 };

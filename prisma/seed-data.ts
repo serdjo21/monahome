@@ -6,6 +6,9 @@ export type SeedRoom = {
   name: string;
   description: string;
   imageAlt: string;
+  heroImageAlt: string;
+  editorialText: string;
+  editorialImageAlt: string;
 };
 
 export type SeedProduct = {
@@ -46,24 +49,36 @@ export const rooms: SeedRoom[] = [
     name: "Dnevna soba",
     description: "Pledovi i jastuci za duge večeri",
     imageAlt: "Sofa u toplom popodnevnom svetlu, pled i jastuci u slojevima",
+    heroImageAlt: "Dnevna soba u predvečerje, pled prebačen preko naslona fotelje, topla lampa",
+    editorialText: "Merino vuna, ručno upletene rese. Pled koji ostaje na sofi cele zime.",
+    editorialImageAlt: "Detalj resa pleda preko drvenog naslona, meko bočno svetlo",
   },
   {
     slug: "spavaca-soba",
     name: "Spavaća soba",
     description: "Lan i pamuk za mirne noći",
     imageAlt: "Krevet sa lanenom posteljinom, noćni stočić sa keramikom",
+    heroImageAlt: "Raspremljen krevet u jutarnjem svetlu, lanena posteljina u slojevima",
+    editorialText: "Prani lan koji postaje mekši sa svakom noći.",
+    editorialImageAlt: "Ruka prelazi preko lanene jastučnice, jutro kroz zavese",
   },
   {
     slug: "kupatilo",
     name: "Kupatilo",
     description: "Peškiri koji se pamte",
     imageAlt: "Složeni peškiri na kamenoj klupi u kupatilu",
+    heroImageAlt: "Kamena kada i složeni peškiri, dnevno svetlo kroz mali prozor",
+    editorialText: "Turski pamuk, 600 g/m². Mekši posle svakog pranja.",
+    editorialImageAlt: "Peškir prebačen preko ivice kamene kade, kapi vode",
   },
   {
     slug: "kuhinja",
     name: "Kuhinja",
     description: "Šolje i lan za jutarnji ritual",
     imageAlt: "Šolje i lanene krpe na drvenoj polici, jutarnja kafa",
+    heroImageAlt: "Kuhinjski sto ujutru, šolje sa kafom i lanena krpa",
+    editorialText: "Svaka šolja je ručno glazirana. Nijedne dve nisu iste.",
+    editorialImageAlt: "Detalj glazure na šolji, para iznad kafe",
   },
 ];
 

@@ -25,8 +25,15 @@ const slugify = (value: string) =>
 
 async function seedRooms() {
   for (const [position, room] of rooms.entries()) {
-    const data = { name: room.name, description: room.description, imageAlt: room.imageAlt, position };
-    await prisma.category.upsert({
+    const data = {
+      name: room.name,
+      description: room.description,
+      imageAlt: room.imageAlt,
+      heroImageAlt: room.heroImageAlt,
+      editorialText: room.editorialText,
+      editorialImageAlt: room.editorialImageAlt,
+      position,
+    };    await prisma.category.upsert({
       where: { slug: room.slug },
       create: { slug: room.slug, ...data },
       update: data,

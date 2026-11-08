@@ -24,6 +24,15 @@ model Category {
   imageAlt    String?
   position    Int      @default(0)
   isVisible   Boolean  @default(true)
+  heroTheme           SectionTheme @default(ESPRESO)
+  heroImagePath       String?
+  heroImageMobilePath String?
+  heroImageAlt        String?
+  heroFocalX          Int          @default(50)
+  heroFocalY          Int          @default(50)
+  editorialText      String?
+  editorialImagePath String?
+  editorialImageAlt  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

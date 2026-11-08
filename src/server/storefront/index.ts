@@ -4,10 +4,20 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/server/db";
-import type { /* ...postojeći tipovi... */ NavLink } from "./types";
 import { toMedia } from "./media";
-import type { Campaign, ColorSwatch, GiftsContent, HomeSection, ProductSummary, Room, SocialContent } from "./types";
-
+import type {
+  Campaign,
+  ColorSwatch,
+  GiftsContent,
+  HomeSection,
+  NavLink,
+  ProductDetail,
+  ProductSummary,
+  Room,
+  RoomDetail,
+  RoomSort,
+  SocialContent,
+} from "./types";
 /**
  * Javni sloj podataka prodavnice. Komponente zovu samo ove funkcije, nikad Prismu direktno.
  * Svaka funkcija je keširana i označena tagom; admin posle izmene poziva
@@ -85,7 +95,131 @@ export async function getProductGrid(source: "new" | "bestsellers", limit = 8): 
   return rows.map(toProductSummary);
 }
 
+/** Slugovi svih objavljenih proizvoda, za generisanje stranica pri buildu. */
+export async function getProductSlugs(): Promise<string[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.products);
+
+  const rows = await prisma.product.findMany({ where: visibleProduct, select: { slug: true } });
+  return rows.map((row) => row.slug);
+}
+
+/**
+ * Sve za stranicu proizvoda. Stanje lagera je keširano kao i ostatak (admin i porudžbine osvežavaju tag);
+ * konačna provera količine je uvek pri porudžbini, ne ovde.
+ */
+export async function getProduct(slug: string): Promise<ProductDetail | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.products);
+
+  const row = await prisma.product.findFirst({
+    where: { slug, ...visibleProduct },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      subtitle: true,
+      description: true,
+      care: true,
+      priceRsd: true,
+      compareAtRsd: true,
+      isNew: true,
+      images: {
+        orderBy: { position: "asc" },
+        select: { path: true, alt: true, variant: { select: { colorName: true } } },
+      },
+      variants: {
+        where: { isActive: true },
+        orderBy: { position: "asc" },
+        select: { id: true, sku: true, colorName: true, colorHex: true, size: true, priceRsd: true, stock: true, reserved: true },
+      },
+      categories: {
+        where: { category: { isVisible: true } },
+        orderBy: { category: { position: "asc" } },
+        take: 1,
+        select: { category: { select: { slug: true, name: true } } },
+      },
+    },
+  });
+  if (!row) return null;
+
+  const colors: ColorSwatch[] = [];
+  const sizes: string[] = [];
+  for (const variant of row.variants) {
+    if (variant.colorName && variant.colorHex && !colors.some((c) => c.name === variant.colorName)) {
+      colors.push({ name: variant.colorName, hex: variant.colorHex });
+    }
+    if (variant.size && !sizes.includes(variant.size)) sizes.push(variant.size);
+  }
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    subtitle: row.subtitle,
+    description: row.description,
+    care: row.care,
+    priceRsd: row.priceRsd,
+    compareAtRsd: row.compareAtRsd,
+    isNew: row.isNew,
+    room: row.categories[0]?.category ?? null,
+    images: row.images.map((image) => ({
+      ...toMedia(image.path, image.alt, row.name),
+      colorName: image.variant?.colorName ?? null,
+    })),
+    colors,
+    sizes,
+    variants: row.variants.map((variant) => ({
+      id: variant.id,
+      sku: variant.sku,
+      colorName: variant.colorName,
+      size: variant.size,
+      priceRsd: variant.priceRsd ?? row.priceRsd,
+      available: Math.max(0, variant.stock - variant.reserved),
+    })),
+  };
+}
+
+/** „Iz iste sobe“: ostali proizvodi iz sobe, najnoviji prvo. Bez sobe: najnoviji uopšte. */
+export async function getRelatedProducts(productId: string, roomSlug: string | null, limit = 8): Promise<ProductSummary[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.products);
+
+  const rows = await prisma.product.findMany({
+    where: {
+      ...visibleProduct,
+      id: { not: productId },
+      ...(roomSlug ? { categories: { some: { category: { slug: roomSlug } } } } : {}),
+    },
+    orderBy: [{ publishedAt: { sort: "desc", nulls: "last" } }],
+    take: limit,
+    select: productSummarySelect,
+  });
+
+  return rows.map(toProductSummary);
+}
+
 // ─── Sobe ───────────────────────────────────────────────────
+
+const roomSelect = {
+  slug: true,
+  name: true,
+  description: true,
+  imagePath: true,
+  imageAlt: true,
+} satisfies Prisma.CategorySelect;
+
+function toRoom(row: Prisma.CategoryGetPayload<{ select: typeof roomSelect }>): Room {
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description ?? "",
+    image: toMedia(row.imagePath, row.imageAlt, row.name),
+  };
+}
 
 export async function getRooms(): Promise<Room[]> {
   "use cache";
@@ -95,17 +229,85 @@ export async function getRooms(): Promise<Room[]> {
   const rows = await prisma.category.findMany({
     where: { isVisible: true },
     orderBy: { position: "asc" },
-    select: { slug: true, name: true, description: true, imagePath: true, imageAlt: true },
+    select: roomSelect,
   });
 
-  return rows.map((row) => ({
-    slug: row.slug,
-    name: row.name,
-    description: row.description ?? "",
-    image: toMedia(row.imagePath, row.imageAlt, row.name),
-  }));
+  return rows.map(toRoom);
 }
 
+/** Jedna soba po slugu; null ako ne postoji ili je sakrivena (stranica tada vraća 404). */
+const roomDetailSelect = {
+  ...roomSelect,
+  heroTheme: true,
+  heroImagePath: true,
+  heroImageMobilePath: true,
+  heroImageAlt: true,
+  heroFocalX: true,
+  heroFocalY: true,
+  editorialText: true,
+  editorialImagePath: true,
+  editorialImageAlt: true,
+} satisfies Prisma.CategorySelect;
+
+/** Jedna soba po slugu, sa herojem i editorijalom; null ako ne postoji ili je sakrivena (404). */
+export async function getRoom(slug: string): Promise<RoomDetail | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.categories);
+
+  const row = await prisma.category.findFirst({
+    where: { slug, isVisible: true },
+    select: roomDetailSelect,
+  });
+  if (!row) return null;
+
+  const focal = { x: row.heroFocalX, y: row.heroFocalY };
+  const heroAlt = row.heroImageAlt ?? row.name;
+  const heroImage = toMedia(row.heroImagePath, heroAlt);
+  const heroImageMobile = toMedia(row.heroImageMobilePath, heroAlt);
+
+  return {
+    ...toRoom(row),
+    hero: {
+      theme: row.heroTheme === "KAMEN" ? "kamen" : "espreso",
+      image: heroImage.src ? { ...heroImage, focal } : null,
+      imageMobile: heroImageMobile.src ? { ...heroImageMobile, focal } : null,
+    },
+    editorial: row.editorialText
+      ? { text: row.editorialText, image: toMedia(row.editorialImagePath, row.editorialImageAlt, row.name) }
+      : null,
+  };
+}
+
+const ROOM_SORTS: readonly RoomSort[] = ["preporuceno", "najnovije", "cena-rastuce", "cena-opadajuce"];
+
+/** Vrednost iz URL-a (?sort=...) u poznato sortiranje; sve nepoznato je „preporučeno“. */
+export function parseRoomSort(value: string | string[] | undefined): RoomSort {
+  return ROOM_SORTS.find((sort) => sort === value) ?? "preporuceno";
+}
+
+const roomOrderBy = {
+  // Redosled koji admin postavi u sobi (ProductCategory.position).
+  preporuceno: [{ position: "asc" }],
+  najnovije: [{ product: { publishedAt: { sort: "desc", nulls: "last" } } }, { position: "asc" }],
+  "cena-rastuce": [{ product: { priceRsd: "asc" } }, { position: "asc" }],
+  "cena-opadajuce": [{ product: { priceRsd: "desc" } }, { position: "asc" }],
+} satisfies Record<RoomSort, Prisma.ProductCategoryOrderByWithRelationInput[]>;
+
+/** Proizvodi jedne sobe, sortirani. Svako sortiranje je zaseban unos u kešu. */
+export async function getRoomProducts(slug: string, sort: RoomSort): Promise<ProductSummary[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.products, CACHE_TAGS.categories);
+
+  const rows = await prisma.productCategory.findMany({
+    where: { category: { slug, isVisible: true }, product: visibleProduct },
+    orderBy: roomOrderBy[sort],
+    select: { product: { select: productSummarySelect } },
+  });
+
+  return rows.map(({ product }) => toProductSummary(product));
+}
 // ─── Kampanja ───────────────────────────────────────────────
 
 const campaignSelect = {

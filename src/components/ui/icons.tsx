@@ -68,3 +68,9 @@ export const ArrowRightIcon = (p: IconProps) => (
     <path d="M4 12h15.5M14 6.5l5.5 5.5-5.5 5.5" />
   </Icon>
 );
+
+export const ChevronDownIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 9.5l6 6 6-6" />
+  </Icon>
+);
