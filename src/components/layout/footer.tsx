@@ -1,9 +1,8 @@
 import Link from "next/link";
 
 import { Wordmark } from "@/components/brand/logo";
-import { mainNav, socialLinks } from "@/config/navigation";
-
-const rooms = mainNav.filter((link) => link.href !== "/kolekcija");
+import { socialLinks } from "@/config/navigation";
+import { getRooms } from "@/server/storefront";
 
 const help = [
   { href: "/dostava", label: "Dostava" },
@@ -25,7 +24,10 @@ const legal = [
 
 const linkClass = "text-body text-ink transition-colors hover:text-ink-muted";
 
-export function Footer() {
+/** Podnožje. Kolona „Sobe“ čita sobe iz baze; ostale kolone su stalne stranice sajta. */
+export async function Footer() {
+  const rooms = await getRooms();
+
   return (
     <footer data-theme="espreso" className="bg-espreso-duboki">
       <div className="container-page grid gap-14 py-20 md:grid-cols-12 md:gap-6">
@@ -39,10 +41,10 @@ export function Footer() {
         </div>
 
         <FooterColumn title="Sobe" className="md:col-span-2 md:col-start-6">
-          {rooms.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className={linkClass}>
-                {item.label}
+          {rooms.map((room) => (
+            <li key={room.slug}>
+              <Link href={`/${room.slug}`} className={linkClass}>
+                {room.name}
               </Link>
             </li>
           ))}
@@ -94,7 +96,15 @@ export function Footer() {
   );
 }
 
-function FooterColumn({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
+function FooterColumn({
+  title,
+  className,
+  children,
+}: {
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className={className}>
       <h2 className="eyebrow text-ink-muted">{title}</h2>

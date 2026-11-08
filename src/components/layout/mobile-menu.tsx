@@ -6,8 +6,8 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/cn";
-import { socialLinks, type NavLink } from "@/config/navigation";
-
+import { socialLinks } from "@/config/navigation";
+import type { NavLink } from "@/server/storefront/types";
 const PANEL_ID = "mobilni-meni";
 
 // Portal sme da se renderuje tek na klijentu (document ne postoji na serveru).

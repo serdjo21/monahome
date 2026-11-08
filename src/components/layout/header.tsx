@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Wordmark } from "@/components/brand/logo";
 import { BagIcon, UserIcon } from "@/components/ui/icons";
-import { mainNav } from "@/config/navigation";
+import { getMainNav } from "@/server/storefront";
 
 import { MobileMenu } from "./mobile-menu";
 
@@ -12,9 +12,12 @@ const textLink =
 
 /**
  * Zaglavlje: nalog i korpa levo, logo u sredini, pretraga (desktop) ili meni (telefon) desno.
- * Na xl+ ekranima ispod logoa ide red sa navigacijom po sobama; na užim je ona u meniju.
+ * Na xl+ ekranima ispod logoa ide red sa navigacijom; na užim je ona u meniju.
+ * Navigacija (kolekcija + sobe) dolazi iz baze preko getMainNav().
  */
-export function Header() {
+export async function Header() {
+  const nav = await getMainNav();
+
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface">
       <div className="container-page grid h-16 grid-cols-[1fr_auto_1fr] items-center xl:h-[4.5rem]">
@@ -49,13 +52,13 @@ export function Header() {
               Pretraga
             </Link>
           </div>
-          <MobileMenu links={mainNav} />
+          <MobileMenu links={nav} />
         </div>
       </div>
 
       <nav aria-label="Glavni meni" className="hidden xl:block">
         <ul className="container-page flex h-11 items-start justify-center gap-10">
-          {mainNav.map((link) => (
+          {nav.map((link) => (
             <li key={link.href}>
               <Link href={link.href} className={textLink}>
                 {link.label}

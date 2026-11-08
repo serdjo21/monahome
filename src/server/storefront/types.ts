@@ -82,3 +82,10 @@ export type HomeSection =
   | { type: "gifts"; content: GiftsContent }
   | { type: "social"; content: SocialContent }
   | { type: "newsletter" };
+
+  export type NavLink = {
+  href: string;
+  label: string;
+  /** Kratak opis ispod naziva u mobilnom meniju. */
+  note?: string;
+};

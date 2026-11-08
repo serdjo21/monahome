@@ -4,7 +4,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/server/db";
-
+import type { /* ...postojeći tipovi... */ NavLink } from "./types";
 import { toMedia } from "./media";
 import type { Campaign, ColorSwatch, GiftsContent, HomeSection, ProductSummary, Room, SocialContent } from "./types";
 
@@ -186,6 +186,26 @@ export async function getActiveCampaign(): Promise<Campaign> {
         : null,
     products: row.products.map(({ product }) => toProductSummary(product)),
   };
+}
+
+// ─── Navigacija ─────────────────────────────────────────────
+
+/**
+ * Glavni meni: aktivna kampanja („Kolekcija“) pa sobe iz baze.
+ * Nema sopstveni keš jer obe funkcije ispod već imaju svoj,
+ * pa izmena sobe ili kampanje u adminu menja i meni.
+ */
+export async function getMainNav(): Promise<NavLink[]> {
+  const [campaign, rooms] = await Promise.all([getActiveCampaign(), getRooms()]);
+
+  return [
+    { href: `/kolekcija/${campaign.slug}`, label: "Kolekcija", note: campaign.season },
+    ...rooms.map((room) => ({
+      href: `/${room.slug}`,
+      label: room.name,
+      note: room.description || undefined,
+    })),
+  ];
 }
 
 // ─── Početna ────────────────────────────────────────────────
