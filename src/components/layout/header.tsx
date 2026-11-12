@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { Wordmark } from "@/components/brand/logo";
-import { BagIcon, UserIcon } from "@/components/ui/icons";
+import { CartButton } from "@/components/cart/cart-button";
+import { UserIcon } from "@/components/ui/icons";
 import { getMainNav } from "@/server/storefront";
 
 import { MobileMenu } from "./mobile-menu";
@@ -12,8 +13,8 @@ const textLink =
 
 /**
  * Zaglavlje: nalog i korpa levo, logo u sredini, pretraga (desktop) ili meni (telefon) desno.
- * Na xl+ ekranima ispod logoa ide red sa navigacijom; na užim je ona u meniju.
- * Navigacija (kolekcija + sobe) dolazi iz baze preko getMainNav().
+ * Na xl+ ekranima ispod logoa ide red sa navigacijom po sobama; na užim je ona u meniju.
+ * Korpa je dugme koje otvara panel (CartButton čita broj iz korpe u browseru).
  */
 export async function Header() {
   const nav = await getMainNav();
@@ -27,18 +28,14 @@ export async function Header() {
             <Link href="/nalog" aria-label="Nalog" className={iconButton}>
               <UserIcon />
             </Link>
-            <Link href="/korpa" aria-label="Korpa" className={iconButton}>
-              <BagIcon />
-            </Link>
+            <CartButton variant="icon" className={iconButton} />
           </div>
           {/* Desktop: reči umesto ikonica */}
           <div className="hidden items-center gap-8 xl:flex">
             <Link href="/nalog" className={textLink}>
               Nalog
             </Link>
-            <Link href="/korpa" className={textLink}>
-              Korpa (0)
-            </Link>
+            <CartButton variant="text" className={textLink} />
           </div>
         </div>
 

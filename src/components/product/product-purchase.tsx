@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { buttonClass } from "@/components/ui/button";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
+import { addToCart, openCart } from "@/lib/cart/store";
 import { cn } from "@/lib/cn";
 import { formatCount, formatRsd } from "@/lib/format";
 import { slugify } from "@/lib/slug";
@@ -22,9 +24,6 @@ const LOW_STOCK = 3;
 /** Cena, boja, veličina, stanje, količina i dugme za korpu. Izbor živi u URL-u, količina lokalno. */
 export function ProductPurchase({ product, selection, onSelect }: ProductPurchaseProps) {
   const [quantity, setQuantity] = useState(1);
-  const [added, setAdded] = useState(false);
-  const addedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(addedTimer.current), []);
 
   const { variant } = selection;
   const available = variant?.available ?? 0;
@@ -40,11 +39,10 @@ export function ProductPurchase({ product, selection, onSelect }: ProductPurchas
     onSelect({ boja: slugify(color), velicina: keepSize && selection.size ? slugify(selection.size) : null });
   }
 
-  function addToCart() {
-    // TODO (korak „Korpa“): dodati { variantId: variant.id, quantity: qty } u korpu i otvoriti panel.
-    setAdded(true);
-    clearTimeout(addedTimer.current);
-    addedTimer.current = setTimeout(() => setAdded(false), 2500);
+  function handleAdd() {
+    if (!variant || !canBuy) return;
+    addToCart(variant.id, qty, available);
+    openCart();
   }
 
   return (
@@ -158,40 +156,15 @@ export function ProductPurchase({ product, selection, onSelect }: ProductPurchas
         </p>
 
         <div className="flex gap-3">
-          {canBuy ? (
-            <div className="flex h-13 items-center border border-hairline">
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.max(1, qty - 1))}
-                disabled={qty <= 1}
-                aria-label="Smanji količinu"
-                className="h-full w-11 text-body-lg text-ink transition-colors disabled:text-ink-muted"
-              >
-                −
-              </button>
-              <span className="w-8 text-center text-body text-ink" aria-live="polite">
-                <span className="sr-only">Količina: </span>
-                {qty}
-              </span>
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.min(available, qty + 1))}
-                disabled={qty >= available}
-                aria-label="Povećaj količinu"
-                className="h-full w-11 text-body-lg text-ink transition-colors disabled:text-ink-muted"
-              >
-                +
-              </button>
-            </div>
-          ) : null}
+          {canBuy ? <QuantityStepper value={qty} max={available} onChange={setQuantity} /> : null}
 
           <button
             type="button"
-            onClick={addToCart}
+            onClick={handleAdd}
             disabled={!canBuy}
             className={buttonClass("primary", "flex-1 disabled:cursor-not-allowed disabled:opacity-50")}
           >
-            {!canBuy ? "Rasprodato" : added ? "Dodato u korpu" : "Dodaj u korpu"}
+            {canBuy ? "Dodaj u korpu" : "Rasprodato"}
           </button>
         </div>
 

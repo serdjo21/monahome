@@ -9,6 +9,7 @@
  */
 
 :root,
+
 [data-theme="kamen"] {
   --surface: #e7e0d5;
   --surface-raised: #efeae2;
@@ -99,6 +100,8 @@
   --color-on-accent: var(--on-accent);
 }
 
+
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
@@ -111,6 +114,10 @@
     font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
+  }
+
+  html:has(dialog[open]:modal) {
+    overflow: hidden;
   }
 
   [data-theme] {

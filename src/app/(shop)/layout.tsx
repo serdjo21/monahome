@@ -1,3 +1,4 @@
+import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 
@@ -13,6 +14,7 @@ export default function ShopLayout({ children }: LayoutProps<"/">) {
       <Header />
       <main id="sadrzaj">{children}</main>
       <Footer />
+      <CartDrawer />
     </>
   );
 }
