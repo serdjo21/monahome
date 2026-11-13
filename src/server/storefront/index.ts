@@ -334,31 +334,9 @@ const campaignSelect = {
     select: { product: { select: productSummarySelect } },
   },
 } satisfies Prisma.CampaignSelect;
+type CampaignRow = Prisma.CampaignGetPayload<{ select: typeof campaignSelect }>;
 
-/**
- * Aktivna kampanja: zakazana kampanja čiji period obuhvata sadašnji trenutak,
- * a ako takve nema, podrazumevana (rezervna) kampanja.
- */
-export async function getActiveCampaign(): Promise<Campaign> {
-  "use cache";
-  // Kampanje se smenjuju po datumu; nova se pojavi najkasnije ~15 min posle početka.
-  cacheLife({ stale: 300, revalidate: 900, expire: 86_400 });
-  cacheTag(CACHE_TAGS.campaigns);
-
-  const now = new Date();
-  const row =
-    (await prisma.campaign.findFirst({
-      where: { status: "SCHEDULED", startsAt: { lte: now }, endsAt: { gte: now } },
-      orderBy: { startsAt: "desc" },
-      select: campaignSelect,
-    })) ??
-    (await prisma.campaign.findFirst({
-      where: { isDefault: true },
-      select: campaignSelect,
-    }));
-
-  if (!row) throw new Error("Ne postoji ni aktivna ni podrazumevana kampanja. Pokrenite `npm run db:seed`.");
-
+function toCampaign(row: CampaignRow): Campaign {
   const focal = { x: row.focalX, y: row.focalY };
   const heroAlt = row.heroImageAlt ?? row.headline;
   const image = { ...toMedia(row.heroImagePath, heroAlt), focal };
@@ -390,6 +368,52 @@ export async function getActiveCampaign(): Promise<Campaign> {
   };
 }
 
+/** Zakazana kampanja čiji period obuhvata dati trenutak. */
+const runningAt = (now: Date) =>
+  ({ status: "SCHEDULED", startsAt: { lte: now }, endsAt: { gte: now } }) satisfies Prisma.CampaignWhereInput;
+
+/**
+ * Aktivna kampanja: zakazana kampanja čiji period obuhvata sadašnji trenutak,
+ * a ako takve nema, podrazumevana (rezervna) kampanja.
+ */
+export async function getActiveCampaign(): Promise<Campaign> {
+  "use cache";
+  // Kampanje se smenjuju po datumu; nova se pojavi najkasnije ~15 min posle početka.
+  cacheLife({ stale: 300, revalidate: 900, expire: 86_400 });
+  cacheTag(CACHE_TAGS.campaigns);
+
+  const now = new Date();
+  const row =
+    (await prisma.campaign.findFirst({
+      where: runningAt(now),
+      orderBy: { startsAt: "desc" },
+      select: campaignSelect,
+    })) ??
+    (await prisma.campaign.findFirst({
+      where: { isDefault: true },
+      select: campaignSelect,
+    }));
+
+  if (!row) throw new Error("Ne postoji ni aktivna ni podrazumevana kampanja. Pokrenite `npm run db:seed`.");
+  return toCampaign(row);
+}
+
+/**
+ * Kampanja po slugu, za stranicu kolekcije. Vidljiva je samo dok traje (ili ako je podrazumevana),
+ * da buduća kolekcija ne procuri preko linka pre datuma početka.
+ */
+export async function getCampaign(slug: string): Promise<Campaign | null> {
+  "use cache";
+  cacheLife({ stale: 300, revalidate: 900, expire: 86_400 });
+  cacheTag(CACHE_TAGS.campaigns);
+
+  const row = await prisma.campaign.findFirst({
+    where: { slug, OR: [{ isDefault: true }, runningAt(new Date())] },
+    select: campaignSelect,
+  });
+
+  return row ? toCampaign(row) : null;
+}
 // ─── Navigacija ─────────────────────────────────────────────
 
 /**

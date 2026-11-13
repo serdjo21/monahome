@@ -4,8 +4,12 @@ import { getActiveCampaign } from "@/server/storefront";
 import type { Campaign } from "@/server/storefront/types";
 
 /** Prvi ekran početne. Ceo sadržaj dolazi iz aktivne kampanje (admin → Kampanje). */
-export async function Hero() {
-  const campaign = await getActiveCampaign();
+/**
+ * Prvi ekran početne. Ceo sadržaj dolazi iz aktivne kampanje (admin → Kampanje).
+ * Stranica kolekcije prosleđuje svoju kampanju.
+ */
+export async function Hero({ campaign: provided }: { campaign?: Campaign }) {
+  const campaign = provided ?? (await getActiveCampaign());
   switch (campaign.layout) {
     case "overlay":
       return <OverlayHero campaign={campaign} />;

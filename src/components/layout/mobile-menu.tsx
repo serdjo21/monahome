@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
@@ -27,18 +26,12 @@ const useIsClient = () =>
 export function MobileMenu({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
   const isClient = useIsClient();
-  const pathname = usePathname();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [lastPathname, setLastPathname] = useState(pathname);
 
   const close = useCallback(() => setOpen(false), []);
 
-  // Promena stranice zatvara meni.
-  if (lastPathname !== pathname) {
-    setLastPathname(pathname);
-    setOpen(false);
-  }
+ 
 
   useEffect(() => {
     const main = document.getElementById("sadrzaj");
@@ -61,8 +54,10 @@ export function MobileMenu({ links }: { links: NavLink[] }) {
     const onResize = () => {
       if (window.matchMedia("(min-width: 80rem)").matches) setOpen(false);
     };
+        const onPopState = () => setOpen(false);
     window.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
+    window.addEventListener("popstate", onPopState);
 
     return () => {
       document.body.style.overflow = previousOverflow;
@@ -70,6 +65,7 @@ export function MobileMenu({ links }: { links: NavLink[] }) {
       footer?.removeAttribute("inert");
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("popstate", onPopState);
     };
   }, [open]);
 

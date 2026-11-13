@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { TextLink } from "@/components/ui/button";
@@ -19,7 +18,6 @@ export function CartDrawer() {
   const open = useCartOpen();
   const count = useCartCount();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const pathname = usePathname();
   const { lines, subtotal, isEmpty, isLoading, notices } = useCartLines(open);
 
   useEffect(() => {
@@ -29,10 +27,12 @@ export function CartDrawer() {
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  // Prelazak na drugu stranicu (npr. dugme „nazad“) zatvara panel.
+  // Dugme „nazad“ zatvara panel; linkovi u panelu ga zatvaraju sami (onNavigate).
+  // Namerno bez usePathname, da panel ostane deo statičnog okvira stranice.
   useEffect(() => {
-    closeCart();
-  }, [pathname]);
+    window.addEventListener("popstate", closeCart);
+    return () => window.removeEventListener("popstate", closeCart);
+  }, []);
 
   return (
     <dialog

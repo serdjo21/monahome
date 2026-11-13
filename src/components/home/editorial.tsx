@@ -1,10 +1,17 @@
 import { TextLink } from "@/components/ui/button";
 import { Media } from "@/components/ui/media";
 import { getActiveCampaign } from "@/server/storefront";
+import type { Campaign } from "@/server/storefront/types";
 
+type EditorialProps = {
+  /** Stranica kolekcije prosleđuje svoju kampanju; početna koristi aktivnu. */
+  campaign?: Campaign;
+  /** Na samoj stranici kolekcije link „Pogledaj priču“ bi vodio na istu stranicu. */
+  showLink?: boolean;
+};
 /** Editorijalni blok kampanje: fotografija preko cele širine, tekst ispod. */
-export async function Editorial() {
-  const campaign = await getActiveCampaign();
+export async function Editorial({ campaign: provided, showLink = true }: EditorialProps) {
+  const campaign = provided ?? (await getActiveCampaign());
   const editorial = campaign.editorial;
   if (!editorial) return null;
 
@@ -28,7 +35,7 @@ export async function Editorial() {
         </div>
         <div className="flex flex-col items-start gap-8 lg:col-span-4 lg:col-start-8 lg:pt-10">
           <p className="text-body-lg text-ink-muted">{editorial.text}</p>
-          <TextLink href={editorial.href}>Pogledaj priču</TextLink>
+         {showLink ? <TextLink href={editorial.href}>Pogledaj priču</TextLink> : null}
         </div>
       </div>
     </section>

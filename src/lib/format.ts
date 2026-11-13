@@ -19,3 +19,8 @@ export function formatCount(count: number, [one, few, many]: [string, string, st
   const word = rule === "one" ? one : rule === "few" ? few : many;
   return `${count} ${word}`;
 }
+
+/** 1 → „MH-1001“. Redni broj iz baze je mali; prikaz počinje od 1001 da ne izgleda kao prva porudžbina. */
+export function formatOrderNumber(number: number): string {
+  return `MH-${1000 + number}`;
+}

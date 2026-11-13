@@ -118,9 +118,9 @@ model ProductVariant {
   position  Int     @default(0)
   isActive  Boolean @default(true)
 
-  product Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  images  ProductImage[]
-
+    product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images     ProductImage[]
+  orderItems OrderItem[]
   @@unique([productId, colorName, size])
   @@index([productId, position])
 }
@@ -231,4 +231,71 @@ model NewsletterSubscriber {
   email     String   @unique
   source    String?
   createdAt DateTime @default(now())
+}
+
+// ─── Porudžbine ─────────────────────────────────────────────
+
+enum OrderStatus {
+  /// Upravo stigla, čeka potvrdu (poziv kupcu ili pregled u adminu).
+  NEW
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  /// Pouzećem: kupac plaća kuriru pri preuzimanju.
+  COD
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  /// Redni broj; kupcu se prikazuje kao MH-1001, MH-1002…
+  number        Int           @unique @default(autoincrement())
+  status        OrderStatus   @default(NEW)
+  paymentMethod PaymentMethod @default(COD)
+
+  email      String
+  phone      String
+  fullName   String
+  address    String
+  postalCode String
+  city       String
+  note       String?
+
+  /// Iznosi u trenutku porudžbine, u dinarima.
+  subtotalRsd Int
+  shippingRsd Int @default(0)
+  totalRsd    Int
+
+  /// Tajni deo linka stranice „Hvala“, da se tuđa porudžbina ne može otvoriti pogađanjem broja.
+  accessToken String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+/// Stavka sa podacima kopiranim u trenutku kupovine: kasnija izmena proizvoda ne menja staru porudžbinu.
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  variantId    String?
+  sku          String
+  productName  String
+  variantLabel String?
+  unitPriceRsd Int
+  quantity     Int
+  lineTotalRsd Int
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([variantId])
 }

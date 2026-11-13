@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { ProductDetails } from "@/components/product/product-details";
 import { ProductHeader } from "@/components/product/product-header";
@@ -33,7 +34,19 @@ export async function generateMetadata({ params }: PageProps<"/proizvod/[slug]">
   };
 }
 
-export default async function ProductPage({ params }: PageProps<"/proizvod/[slug]">) {
+/**
+ * Stranica odmah prikazuje okvir (skelet), a sadržaj stiže čim se pročita slug.
+ * Za proizvode generisane pri buildu sadržaj je već u HTML-u, pa se skelet ni ne vidi.
+ */
+export default function ProductPage({ params }: PageProps<"/proizvod/[slug]">) {
+  return (
+    <Suspense fallback={<ProductSkeleton />}>
+      <ProductContent params={params} />
+    </Suspense>
+  );
+}
+
+async function ProductContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) notFound();
@@ -50,5 +63,21 @@ export default async function ProductPage({ params }: PageProps<"/proizvod/[slug
       </div>
       <RelatedProducts product={product} />
     </>
+  );
+}
+
+function ProductSkeleton() {
+  return (
+    <div aria-hidden="true" className="container-page pb-16 md:pb-section lg:pt-10">
+      <div className="grid gap-8 lg:grid-cols-12 lg:gap-x-6">
+        <div className="-mx-5 aspect-[4/5] bg-surface-sunken md:-mx-10 lg:col-span-7 lg:mx-0" />
+        <div className="flex flex-col gap-5 lg:col-span-5 xl:col-span-4 xl:col-start-9">
+          <div className="h-3 w-1/3 bg-surface-sunken" />
+          <div className="h-10 w-3/4 bg-surface-sunken" />
+          <div className="h-5 w-1/4 bg-surface-sunken" />
+          <div className="mt-6 h-13 w-full bg-surface-sunken" />
+        </div>
+      </div>
+    </div>
   );
 }
