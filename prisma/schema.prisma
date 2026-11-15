@@ -299,3 +299,62 @@ model OrderItem {
   @@index([orderId])
   @@index([variantId])
 }
+
+// ─── Nalozi ─────────────────────────────────────────────────
+
+enum Role {
+  /// Kupac (nalog i istorija porudžbina dolaze u fazi 4).
+  CLIENT
+  ADMIN
+  /// Influenser / partner sa svojim linkovima (faza 4).
+  AFFILIATE
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String?
+  /// bcrypt heš; null dok pozvani korisnik ne postavi lozinku.
+  passwordHash String?
+  role         Role    @default(CLIENT)
+  isActive     Boolean @default(true)
+  /// Raste pri promeni lozinke, uloge ili deaktivaciji: sve ranije prijave tog naloga prestaju da važe.
+  sessionVersion Int   @default(0)
+  lastLoginAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  passwordTokens PasswordToken[]
+}
+
+enum PasswordTokenPurpose {
+  RESET
+  /// Poziv: admin je napravio nalog, korisnik sam postavlja lozinku.
+  INVITE
+}
+
+/// Jednokratni link za postavljanje lozinke. U bazi je samo heš tokena, nikad sam token.
+model PasswordToken {
+  id        String               @id @default(cuid())
+  userId    String
+  tokenHash String               @unique
+  purpose   PasswordTokenPurpose
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Pokušaji prijave, za ograničenje pogađanja lozinke.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}

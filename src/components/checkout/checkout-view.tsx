@@ -13,7 +13,7 @@ import type { CheckoutState } from "@/lib/checkout";
 import { formatRsd } from "@/lib/format";
 import { placeOrder } from "@/server/checkout";
 
-import { Field, TextAreaField } from "./field";
+import { Field, TextAreaField } from "../ui/field";
 
 const initialState: CheckoutState = { status: "idle" };
 

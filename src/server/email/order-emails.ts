@@ -1,18 +1,11 @@
 import "server-only";
 
 import { formatOrderNumber, formatRsd } from "@/lib/format";
-import { SITE_URL } from "@/lib/site";
 import { getOrderById, type OrderDetail } from "@/server/orders";
 
+import { C, escape, heading, label, layout, SANS } from "./layout";
 import { sendEmail } from "./send";
 
-// Boje brenda; mejl klijenti ne čitaju CSS promenljive, pa su vrednosti upisane direktno.
-const C = { kamen: "#e7e0d5", kamenSvetli: "#efeae2", espreso: "#2a211d", taupe: "#6e6053", linija: "#c9beae" };
-const SERIF = "Georgia, 'Times New Roman', serif";
-const SANS = "Helvetica, Arial, sans-serif";
-
-const escape = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 function itemsTable(order: OrderDetail, withSku: boolean) {
   const rows = order.items
@@ -59,32 +52,6 @@ function addressBlock(order: OrderDetail) {
     ${order.note ? `<p style="margin:12px 0 0;font-family:${SANS};font-size:13px;color:${C.taupe}">Napomena: ${escape(order.note)}</p>` : ""}`;
 }
 
-function layout(preheader: string, body: string) {
-  return `<!doctype html>
-<html lang="sr-Latn">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
-  <body style="margin:0;padding:0;background:${C.kamen}">
-    <span style="display:none;max-height:0;overflow:hidden">${escape(preheader)}</span>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.kamen}">
-      <tr><td align="center" style="padding:40px 16px">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
-  <tr><td style="padding:0 0 32px">
-            <a href="${SITE_URL}"><img src="${SITE_URL}/email/monahome-wordmark.png" width="140" height="33" alt="monahome" style="display:block;border:0;width:140px;height:auto"></a>
-          </td></tr>          <tr><td style="background:${C.kamenSvetli};padding:40px 32px">${body}</td></tr>
-          <tr><td style="padding:24px 0 0;font-family:${SANS};font-size:12px;color:${C.taupe}">
-            monahome · <a href="${SITE_URL}" style="color:${C.taupe}">monahome.rs</a>
-          </td></tr>
-        </table>
-      </td></tr>
-    </table>
-  </body>
-</html>`;
-}
-
-const heading = (text: string) =>
-  `<h1 style="margin:0 0 16px;font-family:${SERIF};font-size:32px;font-weight:normal;font-style:italic;color:${C.espreso}">${text}</h1>`;
-const label = (text: string) =>
-  `<p style="margin:32px 0 12px;font-family:${SANS};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.taupe}">${text}</p>`;
 
 function customerEmail(order: OrderDetail) {
   const number = formatOrderNumber(order.number);

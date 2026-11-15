@@ -25,14 +25,14 @@ export async function Header() {
         <div className="flex items-center">
           {/* Telefon i tablet: ikonice */}
           <div className="-ml-2.5 flex items-center xl:hidden">
-            <Link href="/nalog" aria-label="Nalog" className={iconButton}>
+            <Link href="/prijava" aria-label="Nalog" className={iconButton}>
               <UserIcon />
             </Link>
             <CartButton variant="icon" className={iconButton} />
           </div>
           {/* Desktop: reči umesto ikonica */}
           <div className="hidden items-center gap-8 xl:flex">
-            <Link href="/nalog" className={textLink}>
+            <Link href="/prijava" className={textLink}>
               Nalog
             </Link>
             <CartButton variant="text" className={textLink} />
