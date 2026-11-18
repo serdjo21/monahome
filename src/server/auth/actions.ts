@@ -47,7 +47,12 @@ export async function login(_previous: FormState, formData: FormData): Promise<F
   try {
     await signIn("credentials", { email, password, redirect: false });
   } catch (error) {
-    if (error instanceof AuthError) return { error: "Pogrešan e-mail ili lozinka.", values };
+    if (error instanceof AuthError) {
+      // Pogrešan mejl ili lozinka je očekivana greška; sve ostalo je kvar koji treba videti u logu.
+      if (error.type === "CredentialsSignin") return { error: "Pogrešan e-mail ili lozinka.", values };
+      console.error("[prijava]", error);
+      return { error: "Prijava trenutno ne radi zbog greške na serveru. Pokušajte ponovo.", values };
+    }
     throw error;
   }
 
@@ -70,7 +75,10 @@ export async function requestPasswordReset(_previous: FormState, formData: FormD
     message: "Ako postoji nalog sa ovom adresom, poslali smo link za novu lozinku. Proverite i folder za neželjenu poštu.",
   };
 
-  const user = await prisma.user.findUnique({ where: { email: parsed.data }, select: { id: true, email: true, isActive: true } });
+  const user = await prisma.user.findUnique({
+    where: { email: parsed.data },
+    select: { id: true, email: true, name: true, isActive: true },
+  });
   if (!user?.isActive) return done;
 
   // Najviše tri linka na sat po nalogu.
@@ -83,7 +91,7 @@ export async function requestPasswordReset(_previous: FormState, formData: FormD
   await prisma.passwordToken.create({
     data: { userId: user.id, tokenHash, purpose: "RESET", expiresAt: new Date(Date.now() + 60 * 60_000) },
   });
-  await sendPasswordResetEmail(user.email, `${appOrigin()}/lozinka/nova?token=${token}`);
+  await sendPasswordResetEmail(user.email, `${appOrigin()}/lozinka/nova?token=${token}`, user.name);
 
   return done;
 }

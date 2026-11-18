@@ -27,6 +27,13 @@ const orderSelect = {
       unitPriceRsd: true,
       quantity: true,
       lineTotalRsd: true,
+      // Za fotografiju u mejlu: slika varijante, pa prva slika proizvoda (varijanta može biti obrisana).
+      variant: {
+        select: {
+          images: { orderBy: { position: "asc" }, take: 1, select: { path: true } },
+          product: { select: { images: { orderBy: { position: "asc" }, take: 1, select: { path: true } } } },
+        },
+      },
     },
   },
 } as const;

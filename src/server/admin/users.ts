@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import type { Role } from "@/generated/prisma/enums";
-import { ROLE_LABEL, type FormState } from "@/lib/auth-forms";
+import type { FormState } from "@/lib/auth-forms";
 import { appOrigin } from "@/lib/site";
 import { requireRole } from "@/server/auth/guard";
 import { createToken } from "@/server/auth/password";
@@ -23,12 +23,12 @@ async function wouldRemoveLastAdmin(userId: string, nextRole: Role, nextActive: 
   return otherAdmins === 0;
 }
 
-async function sendInvite(user: { id: string; email: string; role: Role }) {
+async function sendInvite(user: { id: string; email: string; name: string | null; role: Role }) {
   const { token, tokenHash } = createToken();
   await prisma.passwordToken.create({
     data: { userId: user.id, tokenHash, purpose: "INVITE", expiresAt: new Date(Date.now() + INVITE_DAYS * 86_400_000) },
   });
-  await sendInviteEmail(user.email, `${appOrigin()}/lozinka/nova?token=${token}`, ROLE_LABEL[user.role]);
+  await sendInviteEmail(user.email, `${appOrigin()}/lozinka/nova?token=${token}`, user.name, user.role);
 }
 
 /** Promena uloge. Odjavljuje korisnika sa svih uređaja, da nova uloga važi odmah. */
@@ -65,7 +65,7 @@ export async function resendInvite(_previous: FormState, formData: FormData): Pr
   await requireRole("ADMIN", "/admin/korisnici");
   const user = await prisma.user.findUnique({
     where: { id: String(formData.get("userId") ?? "") },
-    select: { id: true, email: true, role: true, passwordHash: true, isActive: true },
+    select: { id: true, email: true, name: true, role: true, passwordHash: true, isActive: true },
   });
   if (!user || !user.isActive) return { error: "Nalog ne postoji ili je isključen." };
   if (user.passwordHash) return { error: "Korisnik već ima lozinku." };
@@ -104,7 +104,7 @@ export async function inviteUser(_previous: FormState, formData: FormData): Prom
 
   const user = await prisma.user.create({
     data: { email: parsed.data.email, name: parsed.data.name, role: parsed.data.role },
-    select: { id: true, email: true, role: true },
+    select: { id: true, email: true, name: true, role: true },
   });
   await sendInvite(user);
 
