@@ -1,4 +1,13 @@
-import { Divider, EmailHeading, EmailLayout, greeting, Paragraph, PrimaryButton, Signature, styles } from "./components";
+import {
+  Divider,
+  EmailHeading,
+  EmailLayout,
+  greeting,
+  Paragraph,
+  PrimaryButton,
+  Signature,
+  styles,
+} from "./components";
 
 export const inviteSubject = "Aktivacija naloga na monahome.rs";
 
@@ -13,7 +22,11 @@ type Props = {
 /** Nalog koji je napravio administrator. Link važi sedam dana. */
 export function InviteEmail({ link, email, name, roleLabel }: Props) {
   return (
-    <EmailLayout preview="Za Vas je kreiran nalog na monahome.rs." reason={`Ovaj mejl je poslat na ${email} jer je za ovu adresu kreiran nalog.`}>
+    <EmailLayout
+      minimal
+      preview="Za Vas je kreiran nalog na monahome.rs."
+      reason={`Ovaj mejl je poslat na ${email} jer je za ovu adresu kreiran nalog.`}
+    >
       <EmailHeading label="Nalog">Aktivacija naloga</EmailHeading>
 
       <Paragraph style={{ marginTop: "32px" }}>{greeting(name)}</Paragraph>

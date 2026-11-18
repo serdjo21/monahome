@@ -55,11 +55,13 @@ type LayoutProps = {
   preview: string;
   /** Zašto je mejl stigao; ide u futer. */
   reason: string;
+  /** Mejlovi o nalogu: futer bez linkova ka prodavnici i mrežama, da Gmail ne misli da je reklama. */
+  minimal?: boolean;
   children: ReactNode;
 };
 
 /** Okvir: espreso traka sa logom, svetla kartica sa sadržajem, futer sa kontaktom i linkovima. */
-export function EmailLayout({ preview, reason, children }: LayoutProps) {
+export function EmailLayout({ preview, reason, minimal = false, children }: LayoutProps) {
   return (
     <Html lang="sr-Latn">
       <Head>
@@ -86,20 +88,22 @@ export function EmailLayout({ preview, reason, children }: LayoutProps) {
           <Section style={{ backgroundColor: C.kamenSvetli, padding: "48px 40px" }}>{children}</Section>
 
           <Section style={{ padding: "32px 24px 8px", textAlign: "center" }}>
+            {minimal ? null : (
+              <Text style={{ ...styles.muted, fontSize: "12px", marginBottom: "8px" }}>
+                <Link href={`${SITE_URL}/dostava`} style={{ color: C.taupe }}>
+                  Dostava
+                </Link>
+                {"  ·  "}
+                <Link href={`${SITE_URL}/reklamacije-i-povracaj`} style={{ color: C.taupe }}>
+                  Reklamacije i povraćaj
+                </Link>
+                {"  ·  "}
+                <Link href={`${SITE_URL}/uslovi-koriscenja`} style={{ color: C.taupe }}>
+                  Uslovi kupovine
+                </Link>
+              </Text>
+            )}
             <Text style={{ ...styles.muted, fontSize: "12px" }}>
-              <Link href={`${SITE_URL}/dostava`} style={{ color: C.taupe }}>
-                Dostava
-              </Link>
-              {"  ·  "}
-              <Link href={`${SITE_URL}/reklamacije-i-povracaj`} style={{ color: C.taupe }}>
-                Reklamacije i povraćaj
-              </Link>
-              {"  ·  "}
-              <Link href={`${SITE_URL}/uslovi-koriscenja`} style={{ color: C.taupe }}>
-                Uslovi kupovine
-              </Link>
-            </Text>
-            <Text style={{ ...styles.muted, fontSize: "12px", marginTop: "8px" }}>
               <Link href={`mailto:${CONTACT.email}`} style={{ color: C.taupe, textDecoration: "none" }}>
                 {CONTACT.email}
               </Link>
@@ -107,10 +111,14 @@ export function EmailLayout({ preview, reason, children }: LayoutProps) {
               <Link href={CONTACT.phoneHref} style={{ color: C.taupe, textDecoration: "none" }}>
                 {CONTACT.phone}
               </Link>
-              {"  ·  "}
-              <Link href={CONTACT.instagram} style={{ color: C.taupe, textDecoration: "none" }}>
-                Instagram
-              </Link>
+              {minimal ? null : (
+                <>
+                  {"  ·  "}
+                  <Link href={CONTACT.instagram} style={{ color: C.taupe, textDecoration: "none" }}>
+                    Instagram
+                  </Link>
+                </>
+              )}
             </Text>
             <Text style={{ ...styles.muted, fontSize: "11px", marginTop: "16px", color: "#8a7d70" }}>{reason}</Text>
           </Section>
@@ -175,11 +183,19 @@ export function PrimaryButton({ href, children }: { href: string; children: Reac
 export function InfoRow({ items }: { items: { label: string; value: string }[] }) {
   return (
     <Section
-      style={{ borderTop: `1px solid ${C.linija}`, borderBottom: `1px solid ${C.linija}`, padding: "20px 0", marginTop: "32px" }}
+      style={{
+        borderTop: `1px solid ${C.linija}`,
+        borderBottom: `1px solid ${C.linija}`,
+        padding: "20px 0",
+        marginTop: "32px",
+      }}
     >
       <Row>
         {items.map((item) => (
-          <Column key={item.label} style={{ width: `${100 / items.length}%`, textAlign: "center", verticalAlign: "top" }}>
+          <Column
+            key={item.label}
+            style={{ width: `${100 / items.length}%`, textAlign: "center", verticalAlign: "top" }}
+          >
             <Text style={styles.label}>{item.label}</Text>
             <Text style={{ ...text, fontSize: "14px", marginTop: "4px" }}>{item.value}</Text>
           </Column>

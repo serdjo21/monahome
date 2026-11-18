@@ -1,17 +1,30 @@
-import { Divider, EmailHeading, EmailLayout, greeting, Paragraph, PrimaryButton, Signature, styles } from "./components";
+import {
+  Divider,
+  EmailHeading,
+  EmailLayout,
+  greeting,
+  Paragraph,
+  PrimaryButton,
+  Signature,
+  styles,
+} from "./components";
 
 export const passwordResetSubject = "Promena lozinke";
 
 /** Zaboravljena lozinka. Link važi 60 minuta. */
 export function PasswordResetEmail({ link, email, name }: { link: string; email: string; name: string | null }) {
   return (
-    <EmailLayout preview="Link za promenu lozinke Vašeg naloga." reason={`Ovaj mejl je poslat na ${email} na zahtev za promenu lozinke.`}>
+    <EmailLayout
+      minimal
+      preview="Link za promenu lozinke Vašeg naloga."
+      reason={`Ovaj mejl je poslat na ${email} na zahtev za promenu lozinke.`}
+    >
       <EmailHeading label="Nalog">Promena lozinke</EmailHeading>
 
       <Paragraph style={{ marginTop: "32px" }}>{greeting(name)}</Paragraph>
       <Paragraph>
-        Primili smo zahtev za promenu lozinke za nalog povezan sa adresom {email}. Lozinku možete promeniti putem dugmeta
-        ispod.
+        Primili smo zahtev za promenu lozinke za nalog povezan sa adresom {email}. Lozinku možete promeniti putem
+        dugmeta ispod.
       </Paragraph>
 
       <PrimaryButton href={link}>Promeni lozinku</PrimaryButton>
@@ -30,4 +43,8 @@ export function PasswordResetEmail({ link, email, name }: { link: string; email:
   );
 }
 
-PasswordResetEmail.PreviewProps = { link: "http://localhost:3000/lozinka/nova?token=primer", email: "danaja@primer.rs", name: "Danaja" };
+PasswordResetEmail.PreviewProps = {
+  link: "http://localhost:3000/lozinka/nova?token=primer",
+  email: "danaja@primer.rs",
+  name: "Danaja",
+};
