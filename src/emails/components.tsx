@@ -71,58 +71,61 @@ export function EmailLayout({ preview, reason, minimal = false, children }: Layo
         <meta name="format-detection" content="telephone=no, address=no, email=no, date=no" />
       </Head>
       <Preview>{preview}</Preview>
-      <Body style={{ backgroundColor: C.kamen, margin: 0, padding: "32px 0" }}>
-        <Container style={{ width: "100%", maxWidth: "600px", margin: "0 auto" }}>
-          <Section style={{ backgroundColor: C.espreso, padding: "36px 24px", textAlign: "center" }}>
-            <Link href={SITE_URL}>
-              <Img
-                src={`${SITE_URL}/email/monahome-wordmark-light.png`}
-                width="150"
-                height="33"
-                alt="monahome"
-                style={{ display: "inline-block", border: 0 }}
-              />
-            </Link>
-          </Section>
-
-          <Section style={{ backgroundColor: C.kamenSvetli, padding: "48px 40px" }}>{children}</Section>
-
-          <Section style={{ padding: "32px 24px 8px", textAlign: "center" }}>
-            {minimal ? null : (
-              <Text style={{ ...styles.muted, fontSize: "12px", marginBottom: "8px" }}>
-                <Link href={`${SITE_URL}/dostava`} style={{ color: C.taupe }}>
-                  Dostava
-                </Link>
-                {"  ·  "}
-                <Link href={`${SITE_URL}/reklamacije-i-povracaj`} style={{ color: C.taupe }}>
-                  Reklamacije i povraćaj
-                </Link>
-                {"  ·  "}
-                <Link href={`${SITE_URL}/uslovi-koriscenja`} style={{ color: C.taupe }}>
-                  Uslovi kupovine
-                </Link>
-              </Text>
-            )}
-            <Text style={{ ...styles.muted, fontSize: "12px" }}>
-              <Link href={`mailto:${CONTACT.email}`} style={{ color: C.taupe, textDecoration: "none" }}>
-                {CONTACT.email}
+      <Body style={{ backgroundColor: C.kamen, margin: 0, padding: 0 }}>
+        {/* Gmail briše stil sa <body>, pa boju pozadine nosi tabela preko cele širine; inače ostaje beli okvir. */}
+        <Section style={{ width: "100%", backgroundColor: C.kamen, padding: "24px 8px" }}>
+          <Container style={{ width: "100%", maxWidth: "600px", margin: "0 auto" }}>
+            <Section style={{ backgroundColor: C.espreso, padding: "36px 24px", textAlign: "center" }}>
+              <Link href={SITE_URL}>
+                <Img
+                  src={`${SITE_URL}/email/monahome-wordmark-light.png`}
+                  width="150"
+                  height="33"
+                  alt="monahome"
+                  style={{ display: "inline-block", border: 0 }}
+                />
               </Link>
-              {"  ·  "}
-              <Link href={CONTACT.phoneHref} style={{ color: C.taupe, textDecoration: "none" }}>
-                {CONTACT.phone}
-              </Link>
+            </Section>
+
+            <Section style={{ backgroundColor: C.kamenSvetli, padding: "48px 40px" }}>{children}</Section>
+
+            <Section style={{ padding: "32px 24px 8px", textAlign: "center" }}>
               {minimal ? null : (
-                <>
-                  {"  ·  "}
-                  <Link href={CONTACT.instagram} style={{ color: C.taupe, textDecoration: "none" }}>
-                    Instagram
+                <Text style={{ ...styles.muted, fontSize: "12px", marginBottom: "8px" }}>
+                  <Link href={`${SITE_URL}/dostava`} style={{ color: C.taupe }}>
+                    Dostava
                   </Link>
-                </>
+                  {"  ·  "}
+                  <Link href={`${SITE_URL}/reklamacije-i-povracaj`} style={{ color: C.taupe }}>
+                    Reklamacije i povraćaj
+                  </Link>
+                  {"  ·  "}
+                  <Link href={`${SITE_URL}/uslovi-koriscenja`} style={{ color: C.taupe }}>
+                    Uslovi kupovine
+                  </Link>
+                </Text>
               )}
-            </Text>
-            <Text style={{ ...styles.muted, fontSize: "11px", marginTop: "16px", color: "#8a7d70" }}>{reason}</Text>
-          </Section>
-        </Container>
+              <Text style={{ ...styles.muted, fontSize: "12px" }}>
+                <Link href={`mailto:${CONTACT.email}`} style={{ color: C.taupe, textDecoration: "none" }}>
+                  {CONTACT.email}
+                </Link>
+                {"  ·  "}
+                <Link href={CONTACT.phoneHref} style={{ color: C.taupe, textDecoration: "none" }}>
+                  {CONTACT.phone}
+                </Link>
+                {minimal ? null : (
+                  <>
+                    {"  ·  "}
+                    <Link href={CONTACT.instagram} style={{ color: C.taupe, textDecoration: "none" }}>
+                      Instagram
+                    </Link>
+                  </>
+                )}
+              </Text>
+              <Text style={{ ...styles.muted, fontSize: "11px", marginTop: "16px", color: "#8a7d70" }}>{reason}</Text>
+            </Section>
+          </Container>
+        </Section>
       </Body>
     </Html>
   );
