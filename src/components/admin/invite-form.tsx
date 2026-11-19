@@ -31,7 +31,7 @@ export function InviteForm() {
           id="poziv-uloga"
           name="role"
           defaultValue={state?.values?.role ?? "AFFILIATE"}
-          className="h-13 border border-hairline bg-transparent px-3 text-body text-ink outline-none focus:border-ink"
+          className="h-13 border border-hairline bg-transparent px-3 text-[16px] md:text-body text-ink outline-none focus:border-ink"
         >
           {(Object.keys(ROLE_LABEL) as Role[]).map((role) => (
             <option key={role} value={role}>

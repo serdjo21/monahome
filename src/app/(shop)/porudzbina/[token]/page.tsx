@@ -3,15 +3,23 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { TextLink } from "@/components/ui/button";
+import { CONTACT } from "@/lib/contact";
 import { formatOrderNumber, formatRsd } from "@/lib/format";
 import { getOrderByToken } from "@/server/orders";
 
 export const metadata: Metadata = {
-  title: "Porudžbina primljena",
+  title: "Porudžbina je primljena",
   robots: { index: false },
 };
 
-/** „Hvala“ posle porudžbine. Link sadrži tajni token, pa stranicu vidi samo kupac. */
+/** Isti koraci kao u mejlu potvrde, da kupac na oba mesta čita isto. */
+const NEXT_STEPS = [
+  { title: "Potvrda", text: "Kontaktiraćemo Vas telefonom u roku od jednog radnog dana radi potvrde porudžbine." },
+  { title: "Slanje", text: "Kada pošiljka krene, dobićete mejl sa brojem pošiljke." },
+  { title: "Isporuka", text: "Kurir isporučuje u roku od 2 do 4 radna dana. Plaćanje se vrši pri preuzimanju." },
+];
+
+/** Stranica posle porudžbine. Link sadrži tajni token, pa stranicu vidi samo kupac. */
 export default function OrderPage({ params }: PageProps<"/porudzbina/[token]">) {
   return (
     <div className="container-page py-12 md:py-20">
@@ -29,30 +37,57 @@ async function OrderConfirmation({ params }: { params: Promise<{ token: string }
 
   return (
     <div className="grid gap-12 lg:grid-cols-12 lg:gap-x-6">
-      <div className="flex flex-col gap-6 lg:col-span-6">
-        <p className="eyebrow text-ink-muted">Porudžbina {formatOrderNumber(order.number)}</p>
-        <h1 className="font-display text-[3.25rem] leading-[0.95] tracking-[-0.02em] text-ink italic md:text-display-1">
-          Hvala vam.
-        </h1>
-        <p className="max-w-md text-body-lg text-ink-muted">
-          Porudžbina je primljena. Potvrdu smo poslali na <span className="text-ink">{order.email}</span>, a javićemo
-          vam se kada pošiljka krene.
-        </p>
+      <div className="flex flex-col gap-8 lg:col-span-6">
+        <div className="flex flex-col gap-5">
+          <p className="eyebrow text-ink-muted">Porudžbina {formatOrderNumber(order.number)}</p>
+          <h1 className="font-display text-[2.75rem] leading-[1.02] tracking-[-0.015em] text-ink md:text-display-1">
+            Porudžbina je primljena
+          </h1>
+          <p className="max-w-md text-body-lg text-ink-muted">
+            Hvala Vam na poverenju. Potvrdu porudžbine poslali smo na adresu{" "}
+            <span className="text-ink">{order.email}</span>.
+          </p>
+        </div>
+
         <div>
-          <TextLink href="/">Nazad u prodavnicu</TextLink>
+          <h2 className="label mb-3 text-ink-muted">Šta sledi</h2>
+          <dl className="max-w-md border-b border-hairline">
+            {NEXT_STEPS.map((step) => (
+              <div key={step.title} className="grid grid-cols-[6rem_1fr] gap-4 border-t border-hairline py-4">
+                <dt className="font-display text-body-lg text-ink">{step.title}</dt>
+                <dd className="text-body text-ink-muted">{step.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <p className="max-w-md text-body text-ink-muted">
+          Za sva pitanja stojimo Vam na raspolaganju na{" "}
+          <a href={`mailto:${CONTACT.email}`} className="text-ink underline underline-offset-4">
+            {CONTACT.email}
+          </a>{" "}
+          ili{" "}
+          <a href={CONTACT.phoneHref} className="whitespace-nowrap text-ink underline underline-offset-4">
+            {CONTACT.phone}
+          </a>
+          .
+        </p>
+
+        <div>
+          <TextLink href="/">Nastavite kupovinu</TextLink>
         </div>
       </div>
 
       <div className="flex flex-col gap-8 lg:col-span-5 lg:col-start-8">
         <div className="bg-surface-raised p-6 md:p-8">
-          <h2 className="label mb-4 text-ink">Stavke</h2>
+          <h2 className="label mb-4 text-ink">Pregled porudžbine</h2>
           <ul className="border-b border-hairline">
             {order.items.map((item) => (
               <li key={item.id} className="flex justify-between gap-4 border-t border-hairline py-4">
                 <div>
                   <p className="text-body text-ink">{item.productName}</p>
                   <p className="text-caption text-ink-muted">
-                    {[item.variantLabel, `× ${item.quantity}`].filter(Boolean).join(" · ")}
+                    {[item.variantLabel, `Količina: ${item.quantity}`].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <p className="text-body whitespace-nowrap text-ink">{formatRsd(item.lineTotalRsd)}</p>
@@ -61,10 +96,16 @@ async function OrderConfirmation({ params }: { params: Promise<{ token: string }
           </ul>
           <dl className="mt-4 flex flex-col gap-2 text-body">
             <div className="flex justify-between gap-4">
-              <dt className="text-ink-muted">Dostava</dt>
-              <dd className="text-ink-muted">{order.shippingRsd > 0 ? formatRsd(order.shippingRsd) : "Pri preuzimanju"}</dd>
+              <dt className="text-ink-muted">Međuzbir</dt>
+              <dd className="text-ink">{formatRsd(order.subtotalRsd)}</dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4">
+            <div className="flex justify-between gap-4">
+              <dt className="text-ink-muted">Dostava</dt>
+              <dd className="text-ink-muted">
+                {order.shippingRsd > 0 ? formatRsd(order.shippingRsd) : "Plaća se pri preuzimanju"}
+              </dd>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between gap-4 border-t border-hairline pt-4">
               <dt className="label text-ink">Ukupno</dt>
               <dd className="text-body-lg font-medium text-ink">{formatRsd(order.totalRsd)}</dd>
             </div>
@@ -73,7 +114,7 @@ async function OrderConfirmation({ params }: { params: Promise<{ token: string }
 
         <div className="grid gap-8 sm:grid-cols-2">
           <div>
-            <h2 className="label mb-3 text-ink-muted">Dostava na adresu</h2>
+            <h2 className="label mb-3 text-ink-muted">Adresa za dostavu</h2>
             <p className="text-body text-ink">
               {order.fullName}
               <br />
@@ -85,8 +126,8 @@ async function OrderConfirmation({ params }: { params: Promise<{ token: string }
             </p>
           </div>
           <div>
-            <h2 className="label mb-3 text-ink-muted">Plaćanje</h2>
-            <p className="text-body text-ink">Pouzećem, kuriru pri preuzimanju.</p>
+            <h2 className="label mb-3 text-ink-muted">Način plaćanja</h2>
+            <p className="text-body text-ink">Pouzećem, prilikom preuzimanja pošiljke.</p>
           </div>
         </div>
       </div>

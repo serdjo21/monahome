@@ -9,8 +9,9 @@ type ShellProps = {
   hint?: string;
 };
 
+// Na telefonu 16px: iOS Safari zumira stranicu kad se dodirne polje sa manjim slovima.
 const control =
-  "w-full border border-hairline bg-transparent px-4 text-body text-ink transition-colors outline-none placeholder:text-ink-muted/70 hover:border-ink-muted focus:border-ink aria-invalid:border-accent";
+  "w-full border border-hairline bg-transparent px-4 text-[16px] text-ink md:text-body transition-colors outline-none placeholder:text-ink-muted/70 hover:border-ink-muted focus:border-ink aria-invalid:border-accent";
 
 /** Atributi koji povezuju polje sa oznakom i greškom (za čitače ekrana). */
 function controlProps({ name, error, hint }: ShellProps) {

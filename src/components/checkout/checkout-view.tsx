@@ -7,13 +7,12 @@ import { useActionState, useEffect } from "react";
 import { CartLinesSkeleton, CartNotices } from "@/components/cart/cart-line-item";
 import { useCartLines } from "@/components/cart/use-cart-lines";
 import { buttonClass, TextLink } from "@/components/ui/button";
+import { Field, TextAreaField } from "@/components/ui/field";
 import { Media } from "@/components/ui/media";
 import { clearCart, removeFromCart, setCartQuantity, useCartItems, useCartReady } from "@/lib/cart/store";
 import type { CheckoutState } from "@/lib/checkout";
 import { formatRsd } from "@/lib/format";
 import { placeOrder } from "@/server/checkout";
-
-import { Field, TextAreaField } from "../ui/field";
 
 const initialState: CheckoutState = { status: "idle" };
 
@@ -40,7 +39,7 @@ export function CheckoutView() {
   }, [state, router]);
 
   if (state.status === "success") {
-    return <p className="font-display text-display-3 text-ink italic">Porudžbina je primljena…</p>;
+    return <p className="font-display text-display-3 text-ink">Porudžbina je primljena. Preusmeravamo Vas…</p>;
   }
 
   if (!ready || (isLoading && lines.length === 0)) {
@@ -87,7 +86,7 @@ export function CheckoutView() {
             required
             defaultValue={values.email}
             error={errors.email}
-            hint="Na ovu adresu stiže potvrda porudžbine."
+            hint="Na ovu adresu šaljemo potvrdu porudžbine."
           />
           <Field
             name="phone"
@@ -97,7 +96,7 @@ export function CheckoutView() {
             required
             defaultValue={values.phone}
             error={errors.phone}
-            hint="Kurir vas zove pre dostave."
+            hint="Kurirska služba Vas kontaktira pre isporuke."
           />
         </fieldset>
 
@@ -141,7 +140,7 @@ export function CheckoutView() {
           </div>
           <TextAreaField
             name="note"
-            label="Napomena za kurira (nije obavezno)"
+            label="Napomena uz porudžbinu (opciono)"
             maxLength={500}
             defaultValue={values.note}
             error={errors.note}
@@ -154,7 +153,7 @@ export function CheckoutView() {
             <span aria-hidden="true" className="mt-1.5 size-2.5 shrink-0 rounded-full bg-ink" />
             <div>
               <p className="text-body text-ink">Pouzećem</p>
-              <p className="text-caption text-ink-muted">Plaćate kuriru gotovinom ili karticom pri preuzimanju.</p>
+              <p className="text-caption text-ink-muted">Plaćanje se vrši kuriru prilikom preuzimanja pošiljke.</p>
             </div>
           </div>
         </fieldset>
@@ -174,7 +173,7 @@ export function CheckoutView() {
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <p className="text-body text-ink">{line.productName}</p>
                   <p className="text-caption text-ink-muted">
-                    {[line.variantLabel, `× ${line.quantity}`].filter(Boolean).join(" · ")}
+                    {[line.variantLabel, `Količina: ${line.quantity}`].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <p className="text-body whitespace-nowrap text-ink">{formatRsd(line.unitPriceRsd * line.quantity)}</p>
@@ -189,7 +188,7 @@ export function CheckoutView() {
             </div>
             <div className="flex justify-between gap-4 text-body">
               <dt className="text-ink-muted">Dostava</dt>
-              <dd className="text-ink-muted">Pri preuzimanju</dd>
+              <dd className="text-ink-muted">Plaća se pri preuzimanju</dd>
             </div>
             <div className="mt-2 flex items-baseline justify-between gap-4 border-t border-hairline pt-4">
               <dt className="label text-ink">Ukupno</dt>
@@ -208,13 +207,13 @@ export function CheckoutView() {
                 className="mt-0.5 size-4 shrink-0 accent-espreso"
               />
               <span>
-                Saglasan/na sam sa{" "}
+                Prihvatam{" "}
                 <Link href="/uslovi-koriscenja" className="text-ink underline underline-offset-4">
-                  uslovima kupovine
+                  uslove kupovine
                 </Link>{" "}
                 i{" "}
                 <Link href="/privatnost" className="text-ink underline underline-offset-4">
-                  politikom privatnosti
+                  politiku privatnosti
                 </Link>
                 .
               </span>
@@ -223,7 +222,7 @@ export function CheckoutView() {
           </div>
 
           <button type="submit" disabled={pending || isLoading} className={buttonClass("primary", "w-full")}>
-            {pending ? "Šaljemo porudžbinu…" : "Poruči"}
+            {pending ? "Porudžbina se obrađuje…" : "Potvrdi porudžbinu"}
           </button>
         </div>
       </div>

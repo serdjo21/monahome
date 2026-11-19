@@ -144,7 +144,7 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
 
   // Skriveno polje koje ljudi ne vide; popunjava ga samo bot.
   if (String(formData.get("website") ?? "") !== "") {
-    return { status: "error", values, formError: "Porudžbina nije poslata. Pokušajte ponovo." };
+    return { status: "error", values, formError: "Porudžbina nije poslata. Molimo Vas da pokušate ponovo." };
   }
 
   const parsed = checkoutSchema.safeParse(values);
@@ -159,7 +159,11 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
 
   const items = parseItems(formData.get("items"));
   if (!items) {
-    return { status: "error", values, formError: "Korpa je prazna ili neispravna. Osvežite stranicu i pokušajte ponovo." };
+    return {
+      status: "error",
+      values,
+      formError: "Korpa je prazna. Molimo Vas da osvežite stranicu i pokušate ponovo.",
+    };
   }
 
   let result: Awaited<ReturnType<typeof createOrder>> | undefined;
@@ -170,12 +174,20 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
     } catch (error) {
       if (attempt < 3 && isSerializationFailure(error)) continue;
       console.error("[porudžbina] Greška:", error);
-      return { status: "error", values, formError: "Porudžbina nije prošla zbog greške na našoj strani. Pokušajte ponovo za minut." };
+      return {
+        status: "error",
+        values,
+        formError: "Došlo je do greške prilikom obrade porudžbine. Molimo Vas da pokušate ponovo za nekoliko minuta.",
+      };
     }
   }
 
   if (!result) {
-    return { status: "error", values, formError: "Previše porudžbina u istom trenutku. Pokušajte ponovo." };
+    return {
+      status: "error",
+      values,
+      formError: "Porudžbina trenutno ne može biti obrađena. Molimo Vas da pokušate ponovo.",
+    };
   }
 
   if (result.kind === "stock") {
@@ -183,7 +195,8 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
       status: "error",
       values,
       adjustments: result.adjustments,
-      formError: "Nekih proizvoda je u međuvremenu nestalo ili ih ima manje. Korpa je ažurirana; proverite je i poručite ponovo.",
+      formError:
+        "Pojedini proizvodi više nisu dostupni u traženoj količini. Korpa je usklađena sa stanjem; molimo Vas da je proverite i ponovo potvrdite porudžbinu.",
     };
   }
 

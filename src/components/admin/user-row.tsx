@@ -44,7 +44,7 @@ export function UserRow({ user, isSelf }: { user: UserRowData; isSelf: boolean }
               name="role"
               defaultValue={user.role}
               aria-label={`Uloga: ${user.email}`}
-              className="h-9 border border-hairline bg-transparent px-2 text-body text-ink outline-none focus:border-ink"
+              className="h-9 border border-hairline bg-transparent px-2 text-[16px] md:text-body text-ink outline-none focus:border-ink"
             >
               {(Object.keys(ROLE_LABEL) as Role[]).map((role) => (
                 <option key={role} value={role}>

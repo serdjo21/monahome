@@ -20,7 +20,7 @@ export function CartSummary({ subtotal, onNavigate, showCartLink = false }: Cart
           <span className="label text-ink">Međuzbir</span>
           <span className="text-body-lg font-medium text-ink">{formatRsd(subtotal)}</span>
         </div>
-        <p className="text-caption text-ink-muted">Dostava se obračunava pri plaćanju. Plaćanje pouzećem.</p>
+        <p className="text-caption text-ink-muted">Troškovi dostave plaćaju se prilikom preuzimanja. Plaćanje pouzećem.</p>
       </div>
 
       <LinkButton href="/placanje" onClick={onNavigate} className="w-full">

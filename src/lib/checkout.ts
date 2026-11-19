@@ -28,14 +28,14 @@ export const checkoutSchema = z.object({
   city: z
     .string()
     .trim()
-    .min(2, { error: "Unesite mesto." })
+    .min(2, { error: "Unesite naziv mesta." })
     .max(100, { error: "Naziv mesta je predugačak." }),
   note: z
     .string()
     .trim()
     .max(500, { error: "Napomena može imati najviše 500 znakova." })
     .transform((value) => value || null),
-  terms: z.literal("on", { error: "Potrebna je saglasnost sa uslovima kupovine." }),
+  terms: z.literal("on", { error: "Za nastavak je potrebno da prihvatite uslove kupovine." }),
 });
 
 export type CheckoutField = keyof z.input<typeof checkoutSchema>;
