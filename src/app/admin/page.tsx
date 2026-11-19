@@ -78,14 +78,6 @@ export default async function AdminDashboardPage() {
           )}
         </Panel>
       </div>
-
-      <p className="mt-10 text-caption text-ink-muted">
-        Porudžbine, proizvodi i ostale sekcije stižu u sledećim koracima.{" "}
-        <Link href="/admin/korisnici" className="underline underline-offset-4 hover:text-ink">
-          Korisnici
-        </Link>{" "}
-        već rade.
-      </p>
     </>
   );
 }

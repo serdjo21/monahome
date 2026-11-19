@@ -272,6 +272,16 @@ model Order {
   /// Tajni deo linka stranice „Hvala“, da se tuđa porudžbina ne može otvoriti pogađanjem broja.
   accessToken String @unique
 
+
+  /// Obrada u adminu. Napomenu vidi samo prodavnica, nikad kupac.
+  internalNote   String?
+  courier        String?
+  trackingNumber String?
+  confirmedAt    DateTime?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  cancelledAt    DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AdminShell } from "@/components/admin/admin-shell";
+import { countNewOrders } from "@/server/admin/orders";
 import { requireRole } from "@/server/auth/guard";
 
 export const metadata: Metadata = {
@@ -23,5 +24,10 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
 
 async function AdminGate({ children }: { children: React.ReactNode }) {
   const user = await requireRole("ADMIN");
-  return <AdminShell user={user}>{children}</AdminShell>;
+  const newOrders = await countNewOrders();
+  return (
+    <AdminShell user={user} newOrders={newOrders}>
+      {children}
+    </AdminShell>
+  );
 }

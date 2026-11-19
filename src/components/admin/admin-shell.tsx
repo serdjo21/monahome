@@ -15,7 +15,7 @@ type NavItem = { href: string; label: string; exact?: boolean; soon?: boolean };
 // „soon“: sekcije koje se prave u sledećim koracima; vidljive su da se zna šta dolazi.
 const NAV: NavItem[] = [
   { href: "/admin", label: "Pregled", exact: true },
-  { href: "/admin/porudzbine", label: "Porudžbine", soon: true },
+  { href: "/admin/porudzbine", label: "Porudžbine" },
   { href: "/admin/proizvodi", label: "Proizvodi", soon: true },
   { href: "/admin/sobe", label: "Sobe", soon: true },
   { href: "/admin/kampanje", label: "Kampanje", soon: true },
@@ -24,7 +24,7 @@ const NAV: NavItem[] = [
   { href: "/admin/korisnici", label: "Korisnici" },
 ];
 
-function NavLinks({ pathname }: { pathname: string }) {
+function NavLinks({ pathname, newOrders }: { pathname: string; newOrders: number }) {
   return (
     <ul className="flex flex-col">
       {NAV.map((item) => {
@@ -47,7 +47,17 @@ function NavLinks({ pathname }: { pathname: string }) {
                 active ? "bg-surface-raised text-ink" : "text-ink-muted hover:text-ink",
               )}
             >
-              {item.label}
+              <span className="flex items-center justify-between gap-3">
+                {item.label}
+                {item.href === "/admin/porudzbine" && newOrders > 0 ? (
+                  <span
+                    aria-label={`${newOrders} novih`}
+                    className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[0.6875rem] text-on-accent"
+                  >
+                    {newOrders}
+                  </span>
+                ) : null}
+              </span>
             </Link>
           </li>
         );
@@ -64,7 +74,11 @@ function Account({ user }: { user: CurrentUser }) {
         <p className="text-caption text-ink-muted">{ROLE_LABEL[user.role]}</p>
       </div>
       <div className="flex items-center gap-5">
-        <Link href="/" target="_blank" className="text-caption text-ink-muted underline underline-offset-4 hover:text-ink">
+        <Link
+          href="/"
+          target="_blank"
+          className="text-caption text-ink-muted underline underline-offset-4 hover:text-ink"
+        >
           Pogledaj sajt
         </Link>
         <form action={logout}>
@@ -81,18 +95,29 @@ function Account({ user }: { user: CurrentUser }) {
  * Okvir admina: tamna bočna traka sa menijem na desktopu, traka sa padajućim menijem na telefonu.
  * Ovo je samo izgled; pristup proverava server (requireRole) na svakoj stranici i akciji.
  */
-export function AdminShell({ user, children }: { user: CurrentUser; children: ReactNode }) {
+export function AdminShell({
+  user,
+  newOrders,
+  children,
+}: {
+  user: CurrentUser;
+  newOrders: number;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
-      <aside data-theme="espreso" className="hidden bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-10 lg:px-4 lg:py-8">
+      <aside
+        data-theme="espreso"
+        className="hidden bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-10 lg:px-4 lg:py-8"
+      >
         <Link href="/admin" className="flex items-baseline gap-3 px-3 text-ink">
           <Wordmark className="h-5 w-auto" aria-hidden="true" />
           <span className="label text-ink-muted">Admin</span>
         </Link>
         <nav aria-label="Admin meni" className="flex-1 overflow-y-auto">
-          <NavLinks pathname={pathname} />
+          <NavLinks pathname={pathname} newOrders={newOrders} />
         </nav>
         <Account user={user} />
       </aside>
@@ -111,7 +136,7 @@ export function AdminShell({ user, children }: { user: CurrentUser; children: Re
             </span>
           </summary>
           <div className="flex flex-col gap-6 border-t border-hairline px-2 pt-3 pb-6">
-            <NavLinks pathname={pathname} />
+            <NavLinks pathname={pathname} newOrders={newOrders} />
             <Account user={user} />
           </div>
         </details>
