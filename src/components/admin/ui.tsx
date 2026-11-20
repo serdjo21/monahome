@@ -3,11 +3,21 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 /** Naslov stranice admina sa opisom i (opciono) dugmadima desno. */
-export function AdminPageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+export function AdminPageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="mb-8 flex flex-col gap-4 md:mb-10 md:flex-row md:items-end md:justify-between">
       <div className="flex flex-col gap-2">
-        <h1 className="font-display text-[2.25rem] leading-none tracking-[-0.015em] text-ink md:text-display-2">{title}</h1>
+        <h1 className="font-display text-[2.25rem] leading-none tracking-[-0.015em] text-ink md:text-display-2">
+          {title}
+        </h1>
         {description ? <p className="max-w-xl text-body text-ink-muted">{description}</p> : null}
       </div>
       {actions ? <div className="flex gap-3">{actions}</div> : null}
@@ -19,7 +29,7 @@ export function AdminPageHeader({ title, description, actions }: { title: string
 export function Panel({ title, children, className }: { title?: string; children: ReactNode; className?: string }) {
   return (
     <section className={cn("border border-hairline bg-surface-raised", className)}>
-      {title ? <h2 className="label border-b border-hairline px-5 py-4 text-ink md:px-6">{title}</h2> : null}
+      {title ? <h2 className="border-b border-hairline px-5 py-4 label text-ink md:px-6">{title}</h2> : null}
       <div className="px-5 py-4 md:px-6">{children}</div>
     </section>
   );
@@ -41,12 +51,21 @@ const STATUS_TONE: Record<string, string> = {
   SHIPPED: "border border-ink text-ink",
   DELIVERED: "border border-hairline text-ink-muted",
   CANCELLED: "border border-hairline text-ink-muted line-through",
+  // Proizvodi
+  ACTIVE: "bg-ink text-surface",
+  DRAFT: "border border-ink text-ink",
+  ARCHIVED: "border border-hairline text-ink-muted",
 };
 
-/** Oznaka statusa porudžbine: nova je jedina u boji, jer jedina traži akciju. */
+/** Oznaka statusa porudžbine ili proizvoda. Nova porudžbina je jedina u boji, jer jedina traži akciju. */
 export function StatusBadge({ status, label }: { status: string; label: string }) {
   return (
-    <span className={cn("inline-flex h-6 items-center px-2 text-[0.6875rem] tracking-[0.08em] uppercase", STATUS_TONE[status])}>
+    <span
+      className={cn(
+        "inline-flex h-6 items-center px-2 text-[0.6875rem] tracking-[0.08em] uppercase",
+        STATUS_TONE[status],
+      )}
+    >
       {label}
     </span>
   );

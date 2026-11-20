@@ -16,7 +16,7 @@ type NavItem = { href: string; label: string; exact?: boolean; soon?: boolean };
 const NAV: NavItem[] = [
   { href: "/admin", label: "Pregled", exact: true },
   { href: "/admin/porudzbine", label: "Porudžbine" },
-  { href: "/admin/proizvodi", label: "Proizvodi", soon: true },
+  { href: "/admin/proizvodi", label: "Proizvodi"},
   { href: "/admin/sobe", label: "Sobe", soon: true },
   { href: "/admin/kampanje", label: "Kampanje", soon: true },
   { href: "/admin/pocetna", label: "Početna", soon: true },
