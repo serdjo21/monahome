@@ -4,23 +4,24 @@ import { useActionState } from "react";
 
 import { buttonClass } from "@/components/ui/button";
 import { subscribeToNewsletter, type NewsletterState } from "@/server/newsletter";
+import type { NewsletterContent } from "@/server/storefront/types";
 
 const initial: NewsletterState = { status: "idle" };
 
-/** Prijava na novosti: obična sekcija u toku strane, nikad iskačući prozor. */
-export function Newsletter() {
+/** Prijava na novosti: obična sekcija u toku strane, nikad iskačući prozor. Tekstovi iz admina (Početna). */
+export function Newsletter({ content }: { content: NewsletterContent }) {
   const [state, formAction, pending] = useActionState(subscribeToNewsletter, initial);
 
   return (
     <section aria-labelledby="novosti" className="border-t border-hairline py-16 md:py-section">
       <div className="container-page grid gap-10 lg:grid-cols-12 lg:gap-6">
         <div className="flex flex-col gap-4 lg:col-span-5">
-          <p className="eyebrow text-ink-muted">Novosti</p>
+          <p className="eyebrow text-ink-muted">{content.eyebrow}</p>
           <h2
             id="novosti"
             className="font-display text-[2.25rem] leading-[1.05] tracking-[-0.01em] text-balance text-ink md:text-display-2"
           >
-            Prvi saznajte za nove kolekcije.
+            {content.title}
           </h2>
         </div>
 
@@ -61,7 +62,7 @@ export function Newsletter() {
                   {state.message}
                 </p>
               ) : null}
-              <p className="text-caption text-ink-muted">Samo nove kolekcije i poneka priča. Bez spama.</p>
+              <p className="text-caption text-ink-muted">{content.note}</p>
             </form>
           )}
         </div>

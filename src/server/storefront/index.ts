@@ -3,21 +3,33 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 
 import type { Prisma } from "@/generated/prisma/client";
+import {
+  INSTAGRAM_URL,
+  readBrandStory,
+  readGifts,
+  readNewsletter,
+  readProductGrid,
+  readSocial,
+} from "@/lib/home-content";
 import { prisma } from "@/server/db";
+
 import { toMedia } from "./media";
 import type {
+  BrandStoryContent,
   Campaign,
   ColorSwatch,
   GiftsContent,
   HomeSection,
   NavLink,
   ProductDetail,
+  ProductGridContent,
   ProductSummary,
   Room,
   RoomDetail,
   RoomSort,
   SocialContent,
 } from "./types";
+
 /**
  * Javni sloj podataka prodavnice. Komponente zovu samo ove funkcije, nikad Prismu direktno.
  * Svaka funkcija je keširana i označena tagom; admin posle izmene poziva
@@ -133,7 +145,16 @@ export async function getProduct(slug: string): Promise<ProductDetail | null> {
       variants: {
         where: { isActive: true },
         orderBy: { position: "asc" },
-        select: { id: true, sku: true, colorName: true, colorHex: true, size: true, priceRsd: true, stock: true, reserved: true },
+        select: {
+          id: true,
+          sku: true,
+          colorName: true,
+          colorHex: true,
+          size: true,
+          priceRsd: true,
+          stock: true,
+          reserved: true,
+        },
       },
       categories: {
         where: { category: { isVisible: true } },
@@ -183,7 +204,11 @@ export async function getProduct(slug: string): Promise<ProductDetail | null> {
 }
 
 /** „Iz iste sobe“: ostali proizvodi iz sobe, najnoviji prvo. Bez sobe: najnoviji uopšte. */
-export async function getRelatedProducts(productId: string, roomSlug: string | null, limit = 8): Promise<ProductSummary[]> {
+export async function getRelatedProducts(
+  productId: string,
+  roomSlug: string | null,
+  limit = 8,
+): Promise<ProductSummary[]> {
   "use cache";
   cacheLife("hours");
   cacheTag(CACHE_TAGS.products);
@@ -235,7 +260,6 @@ export async function getRooms(): Promise<Room[]> {
   return rows.map(toRoom);
 }
 
-/** Jedna soba po slugu; null ako ne postoji ili je sakrivena (stranica tada vraća 404). */
 const roomDetailSelect = {
   ...roomSelect,
   heroTheme: true,
@@ -308,6 +332,7 @@ export async function getRoomProducts(slug: string, sort: RoomSort): Promise<Pro
 
   return rows.map(({ product }) => toProductSummary(product));
 }
+
 // ─── Kampanja ───────────────────────────────────────────────
 
 const campaignSelect = {
@@ -334,6 +359,7 @@ const campaignSelect = {
     select: { product: { select: productSummarySelect } },
   },
 } satisfies Prisma.CampaignSelect;
+
 type CampaignRow = Prisma.CampaignGetPayload<{ select: typeof campaignSelect }>;
 
 function toCampaign(row: CampaignRow): Campaign {
@@ -414,6 +440,22 @@ export async function getCampaign(slug: string): Promise<Campaign | null> {
 
   return row ? toCampaign(row) : null;
 }
+
+/**
+ * Pregled kampanje pre objave, po tajnom tokenu iz admina. Bez keša i bez provere perioda/statusa:
+ * vidi je samo ko ima link (admin). Proizvodi su i dalje samo objavljeni, kao na pravom sajtu.
+ */
+export async function getCampaignByPreviewToken(
+  token: string,
+): Promise<{ id: string; name: string; campaign: Campaign } | null> {
+  if (!token || token.length > 64) return null;
+  const row = await prisma.campaign.findUnique({
+    where: { previewToken: token },
+    select: { ...campaignSelect, id: true, name: true },
+  });
+  return row ? { id: row.id, name: row.name, campaign: toCampaign(row) } : null;
+}
+
 // ─── Navigacija ─────────────────────────────────────────────
 
 /**
@@ -436,33 +478,6 @@ export async function getMainNav(): Promise<NavLink[]> {
 
 // ─── Početna ────────────────────────────────────────────────
 
-/** Čita tekstualno polje iz podešavanja sekcije (JSON); prazno ili nepostojeće → podrazumevano. */
-function text(settings: Record<string, unknown>, key: string, fallback: string): string {
-  const value = settings[key];
-  return typeof value === "string" && value.trim() !== "" ? value : fallback;
-}
-
-function toGiftsContent(settings: Record<string, unknown>): GiftsContent {
-  const title = text(settings, "title", "Ritual za dvoje");
-  return {
-    eyebrow: text(settings, "eyebrow", "Pokloni"),
-    title,
-    text: text(
-      settings,
-      "text",
-      "Dve ručno glazirane šolje i laneni peškir, spakovani u kutiju sa monogramom. Spremno za poklon.",
-    ),
-    cta: { label: text(settings, "ctaLabel", "Pogledaj poklone"), href: text(settings, "ctaHref", "/pokloni") },
-    image: toMedia(
-      text(settings, "imagePath", ""),
-      text(settings, "imageAlt", "Poklon kutija sa monogramom, unutra dve šolje i složen peškir, svilena traka"),
-      title,
-    ),
-  };
-}
-
-const INSTAGRAM_URL = "https://www.instagram.com/monahome.rs";
-
 /** Probni kadrovi dok u adminu nisu dodate prave objave. */
 const SOCIAL_PLACEHOLDERS = [
   "Šolja na prozoru, jutarnje svetlo",
@@ -473,21 +488,38 @@ const SOCIAL_PLACEHOLDERS = [
   "Kupatilo u kamenu, složeni peškiri",
 ];
 
-function toSocialContent(settings: Record<string, unknown>): SocialContent {
-  const raw = Array.isArray(settings.posts) ? settings.posts : [];
-  const posts = raw
-    .filter((post): post is Record<string, unknown> => typeof post === "object" && post !== null)
-    .map((post, index) => ({
-      id: `post-${index}`,
-      image: toMedia(text(post, "imagePath", ""), text(post, "imageAlt", "Objava sa Instagrama")),
-      href: text(post, "href", INSTAGRAM_URL),
+/** Link se prikazuje samo kad su upisani i tekst i adresa. */
+function optionalLink(label: string, href: string) {
+  return label && href ? { label, href } : null;
+}
+
+function toGiftsContent(settings: unknown): GiftsContent {
+  const s = readGifts(settings);
+  return {
+    eyebrow: s.eyebrow,
+    title: s.title,
+    text: s.text,
+    cta: { label: s.ctaLabel, href: s.ctaHref },
+    image: toMedia(s.imagePath, s.imageAlt, s.title),
+  };
+}
+
+function toSocialContent(settings: unknown): SocialContent {
+  const s = readSocial(settings);
+  const posts = s.posts
+    .map((post, index) => ({ ...post, index }))
+    .filter((post) => post.imagePath)
+    .map((post) => ({
+      id: `post-${post.index}`,
+      image: toMedia(post.imagePath, post.imageAlt || "Objava sa Instagrama"),
+      href: post.href || INSTAGRAM_URL,
     }));
 
   return {
-    handle: text(settings, "handle", "@monahome.rs"),
+    handle: s.handle,
     posts:
       posts.length > 0
-        ? posts.slice(0, 6)
+        ? posts
         : SOCIAL_PLACEHOLDERS.map((alt, index) => ({
             id: `placeholder-${index}`,
             image: { src: null, alt },
@@ -496,7 +528,23 @@ function toSocialContent(settings: Record<string, unknown>): SocialContent {
   };
 }
 
-/** Uključene sekcije početne, redom iz admina (Početna → Sekcije). */
+function toBrandStoryContent(settings: unknown): BrandStoryContent {
+  const s = readBrandStory(settings);
+  return {
+    eyebrow: s.eyebrow,
+    title: s.title,
+    principles: s.principles,
+    link: optionalLink(s.linkLabel, s.linkHref),
+    image: toMedia(s.imagePath, s.imageAlt, s.title),
+  };
+}
+
+function toProductGridContent(settings: unknown): ProductGridContent {
+  const s = readProductGrid(settings);
+  return { source: s.source, eyebrow: s.eyebrow, title: s.title, link: optionalLink(s.linkLabel, s.linkHref) };
+}
+
+/** Uključene sekcije početne, redom iz admina (Početna → Sekcije). Hero je uvek prvi. */
 export async function getHomeSections(): Promise<HomeSection[]> {
   "use cache";
   cacheLife("hours");
@@ -506,13 +554,9 @@ export async function getHomeSections(): Promise<HomeSection[]> {
     where: { isEnabled: true },
     orderBy: { position: "asc" },
   });
+  const ordered = [...rows.filter((row) => row.type === "HERO"), ...rows.filter((row) => row.type !== "HERO")];
 
-  return rows.map((row): HomeSection => {
-    const settings =
-      row.settings && typeof row.settings === "object" && !Array.isArray(row.settings)
-        ? (row.settings as Record<string, unknown>)
-        : {};
-
+  return ordered.map((row): HomeSection => {
     switch (row.type) {
       case "HERO":
         return { type: "hero" };
@@ -523,15 +567,15 @@ export async function getHomeSections(): Promise<HomeSection[]> {
       case "EDITORIAL":
         return { type: "editorial" };
       case "PRODUCT_GRID":
-        return { type: "product-grid", source: settings.source === "bestsellers" ? "bestsellers" : "new" };
+        return { type: "product-grid", content: toProductGridContent(row.settings) };
       case "BRAND_STORY":
-        return { type: "brand-story" };
+        return { type: "brand-story", content: toBrandStoryContent(row.settings) };
       case "GIFTS":
-        return { type: "gifts", content: toGiftsContent(settings) };
+        return { type: "gifts", content: toGiftsContent(row.settings) };
       case "SOCIAL":
-        return { type: "social", content: toSocialContent(settings) };
+        return { type: "social", content: toSocialContent(row.settings) };
       case "NEWSLETTER":
-        return { type: "newsletter" };
+        return { type: "newsletter", content: readNewsletter(row.settings) };
     }
   });
 }

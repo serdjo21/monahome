@@ -22,6 +22,15 @@ export const ROOM_IMAGE_SPECS = {
   editorial: { width: 2400, height: 1600, ratio: "3:2" },
 } satisfies Record<string, ImageSpec>;
 
+export const CAMPAIGN_IMAGE_SPECS = {
+  /** Hero na računaru; isti kadar služi za sva tri rasporeda (seče se po tački fokusa). */
+  hero: { width: 2400, height: 1350, ratio: "16:9" },
+  /** Hero na telefonu (uspravno). */
+  heroMobile: { width: 1080, height: 1350, ratio: "4:5" },
+  /** Editorijal: na računaru široko (16:7), na telefonu uspravno (4:5); predmet u sredini kadra. */
+  editorial: { width: 2400, height: 1600, ratio: "3:2" },
+} satisfies Record<string, ImageSpec>;
+
 export function imageSpecHint(spec: ImageSpec) {
   return `Preporučeno ${spec.width} × ${spec.height} px (${spec.ratio}), JPG, WebP ili PNG, do ${IMAGE_MAX_MB} MB.`;
 }
@@ -52,6 +61,7 @@ export const RESERVED_SLUGS = new Set([
   "politika-privatnosti",
   "reklamacije",
   "pokloni",
+  "pregled",
   "sitemap",
   "robots",
 ]);

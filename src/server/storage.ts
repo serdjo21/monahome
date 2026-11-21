@@ -65,3 +65,22 @@ export async function removeObjects(paths: string[]): Promise<void> {
     console.error("Storage: brisanje nije uspelo", error);
   }
 }
+
+
+/** Kopija fajla u istom bucketu (dupliranje kampanje dobija svoje fotografije, ne deli ih). */
+export async function copyObject(from: string, to: string): Promise<boolean> {
+  try {
+    const { url, key } = config();
+    const response = await fetch(`${url}/storage/v1/object/copy`, {
+      method: "POST",
+      headers: { ...headers(key), "Content-Type": "application/json" },
+      body: JSON.stringify({ bucketId: BUCKET, sourceKey: from, destinationKey: to }),
+      cache: "no-store",
+    });
+    if (!response.ok) console.error("Storage: kopiranje nije uspelo", response.status, await response.text());
+    return response.ok;
+  } catch (error) {
+    console.error("Storage: kopiranje nije uspelo", error);
+    return false;
+  }
+}

@@ -6,6 +6,7 @@ import { requireRole } from "@/server/auth/guard";
 import { prisma } from "@/server/db";
 
 export const metadata = { title: "Korisnici" };
+export const instant = false;
 
 export default async function AdminUsersPage() {
   const admin = await requireRole("ADMIN", "/admin/korisnici");

@@ -36,6 +36,20 @@ export type Room = {
   image: Media;
 };
 
+/** Soba sa svim što prikazuje njena stranica: hero i editorijal prekid u mreži. */
+export type RoomDetail = Room & {
+  hero: {
+    /** Bez slike: boja bloka. Sa slikom tekst je uvek svetao preko tamnog prelaza. */
+    theme: Theme;
+    image: Media | null;
+    imageMobile: Media | null;
+  };
+  editorial: { text: string; image: Media } | null;
+};
+
+/** Sortiranje proizvoda u sobi; vrednost ide u URL kao ?sort=... */
+export type RoomSort = "preporuceno" | "najnovije" | "cena-rastuce" | "cena-opadajuce";
+
 export type HeroLayout = "split" | "full-bleed" | "overlay";
 
 export type Campaign = {
@@ -57,7 +71,7 @@ export type Campaign = {
   products: ProductSummary[];
 };
 
-/** Sadržaj sekcije Pokloni; uređuje se u adminu (Početna → Sekcije → Pokloni). */
+/** Sadržaj sekcije Pokloni; uređuje se u adminu (Početna → Pokloni). */
 export type GiftsContent = {
   eyebrow: string;
   title: string;
@@ -66,38 +80,44 @@ export type GiftsContent = {
   image: Media;
 };
 
-/** Sadržaj sekcije Instagram/TikTok; uređuje se u adminu (Početna → Sekcije → Mreže). */
+/** Sadržaj sekcije Instagram/TikTok; uređuje se u adminu (Početna → Mreže). */
 export type SocialContent = {
   handle: string;
   posts: Array<{ id: string; image: Media; href: string }>;
 };
 
-/** Soba sa svim što prikazuje njena stranica: hero i editorijal prekid u mreži. */
-export type RoomDetail = Room & {
-  hero: {
-    /** Bez slike: boja bloka. Sa slikom tekst je uvek svetao preko tamnog prelaza. */
-    theme: Theme;
-    image: Media | null;
-    imageMobile: Media | null;
-  };
-  editorial: { text: string; image: Media } | null;
+/** Mreža proizvoda na početnoj (Početna → Mreža proizvoda). */
+export type ProductGridContent = {
+  source: "new" | "bestsellers";
+  eyebrow: string;
+  title: string;
+  link: { label: string; href: string } | null;
 };
 
-/** Sortiranje proizvoda u sobi; vrednost ide u URL kao ?sort=... */
-export type RoomSort = "preporuceno" | "najnovije" | "cena-rastuce" | "cena-opadajuce";
+/** Priča brenda: tri načela i fotografija (Početna → Priča brenda). */
+export type BrandStoryContent = {
+  eyebrow: string;
+  title: string;
+  principles: Array<{ title: string; text: string }>;
+  link: { label: string; href: string } | null;
+  image: Media;
+};
+
+/** Prijava na novosti (Početna → Novosti). */
+export type NewsletterContent = { eyebrow: string; title: string; note: string };
 
 export type HomeSection =
   | { type: "hero" }
   | { type: "collection-carousel" }
   | { type: "rooms" }
   | { type: "editorial" }
-  | { type: "product-grid"; source: "new" | "bestsellers" }
-  | { type: "brand-story" }
+  | { type: "product-grid"; content: ProductGridContent }
+  | { type: "brand-story"; content: BrandStoryContent }
   | { type: "gifts"; content: GiftsContent }
   | { type: "social"; content: SocialContent }
-  | { type: "newsletter" };
+  | { type: "newsletter"; content: NewsletterContent };
 
-  export type NavLink = {
+export type NavLink = {
   href: string;
   label: string;
   /** Kratak opis ispod naziva u mobilnom meniju. */

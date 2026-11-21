@@ -1,11 +1,12 @@
 import { ProductCard } from "@/components/product/product-card";
 import { getActiveCampaign } from "@/server/storefront";
+import type { Campaign } from "@/server/storefront/types";
 
 import { Carousel } from "./carousel";
 
-/** „Iz kolekcije“: proizvodi koje je admin izabrao u aktivnoj kampanji, tim redosledom. */
-export async function CollectionCarousel() {
-  const campaign = await getActiveCampaign();
+/** „Iz kolekcije“: proizvodi koje je admin izabrao u aktivnoj kampanji, tim redosledom. Pregled prosleđuje svoju. */
+export async function CollectionCarousel({ campaign: provided }: { campaign?: Campaign }) {
+  const campaign = provided ?? (await getActiveCampaign());
   if (campaign.products.length === 0) return null;
 
   return (

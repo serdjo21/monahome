@@ -7,6 +7,7 @@ import { getDashboard } from "@/server/admin/dashboard";
 import { requireRole } from "@/server/auth/guard";
 
 export const metadata = { title: "Pregled" };
+export const instant = false;
 
 export default async function AdminDashboardPage() {
   await requireRole("ADMIN");
