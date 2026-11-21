@@ -69,9 +69,9 @@ export async function sendOrderEmails(orderId: string): Promise<void> {
       ...(await renderEmail(<OrderConfirmationEmail order={order} />)),
     }),
     notify
+          
       ? sendEmail({
           to: notify,
-          replyTo: order.email,
           subject: orderNotificationSubject(order),
           ...(await renderEmail(
             <OrderNotificationEmail order={order} adminUrl={`${appOrigin()}/admin/porudzbine/${order.id}`} />,

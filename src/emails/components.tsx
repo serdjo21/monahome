@@ -233,13 +233,13 @@ export function Signature() {
 }
 
 /**
- * Gmail i iOS same pretvaraju adrese i brojeve u plave linkove.
- * Nevidljivi razmak posle svake cifre to sprečava, a tekst izgleda isto.
+ * Ranije je ubacivala nevidljive znakove između cifara (da Gmail ne pravi linkove od telefona i adresa),
+ * ali spam filteri to kažnjavaju kao prikrivanje teksta. Sada vraća tekst nepromenjen; poziv ostaje
+ * na svim mestima, da se ponašanje menja samo ovde.
  */
 export function noAutoLink(value: string): string {
-  return value.replace(/(\d)/g, "$1\u200C");
+  return value;
 }
-
 /** „Danaja Maras“ → „Danaja“, za obraćanje „Dobar dan, Danaja,“. */
 export function firstName(fullName: string | null | undefined): string | null {
   const first = fullName?.trim().split(/\s+/)[0];
