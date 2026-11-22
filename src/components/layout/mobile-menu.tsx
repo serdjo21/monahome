@@ -149,11 +149,7 @@ export function MobileMenu({ links }: { links: NavLink[] }) {
                   </ul>
 
                   <ul className="mt-10 flex flex-col gap-5">
-                    <li>
-                      <Link href="/pretraga" onClick={close} className="label text-ink">
-                        Pretraga
-                      </Link>
-                    </li>
+                    
                     <li>
                       <Link href="/kontakt" onClick={close} className="label text-ink">
                         Kontakt

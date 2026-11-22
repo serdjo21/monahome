@@ -44,11 +44,7 @@ export async function Header() {
         </Link>
 
         <div className="flex items-center justify-end">
-          <div className="hidden xl:block">
-            <Link href="/pretraga" className={textLink}>
-              Pretraga
-            </Link>
-          </div>
+         
           <MobileMenu links={nav} />
         </div>
       </div>

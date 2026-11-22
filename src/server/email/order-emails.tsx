@@ -1,8 +1,6 @@
 import "server-only";
-
 import { render } from "@react-email/components";
 import type { ReactElement } from "react";
-
 import { OrderConfirmationEmail, orderConfirmationSubject } from "@/emails/order-confirmation";
 import { OrderNotificationEmail, orderNotificationSubject } from "@/emails/order-notification";
 import { OrderShippedEmail, orderShippedSubject } from "@/emails/order-shipped";
@@ -12,7 +10,6 @@ import { formatOrderNumber } from "@/lib/format";
 import { appOrigin, SITE_URL } from "@/lib/site";
 import { getOrderById, type OrderDetail } from "@/server/orders";
 import { mediaUrl } from "@/server/storefront/media";
-
 import { sendEmail } from "./send";
 
 /** Mejl otvara slike sa interneta, pa putanja mora biti apsolutna. */

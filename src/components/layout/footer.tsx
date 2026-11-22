@@ -13,7 +13,6 @@ const help = [
 const brand = [
   { href: "/o-nama", label: "O nama" },
   { href: "/saradnja", label: "Saradnja" },
-  { href: "/pokloni", label: "Pokloni" },
 ];
 
 const legal = [

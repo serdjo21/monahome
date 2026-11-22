@@ -368,3 +368,17 @@ model LoginAttempt {
 
   @@index([email, createdAt])
 }
+
+
+/// Tekstualne stranice sajta (O nama, Dostava, pravne stranice…). Spisak je fiksan u kodu (src/lib/pages.ts);
+/// red u bazi postoji tek kad se stranica izmeni u adminu, do tada se prikazuje podrazumevani tekst.
+model Page {
+  slug           String   @id
+  title          String
+  intro          String?
+  /// Tekst u jednostavnom formatu: „## podnaslov“, „- stavka“, **podebljano**, [tekst](link).
+  body           String
+  seoDescription String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
