@@ -1,3 +1,4 @@
+// src/components/checkout/checkout-view.tsx
 "use client";
 
 import Link from "next/link";
@@ -9,6 +10,7 @@ import { useCartLines } from "@/components/cart/use-cart-lines";
 import { buttonClass, TextLink } from "@/components/ui/button";
 import { Field, TextAreaField } from "@/components/ui/field";
 import { Media } from "@/components/ui/media";
+import { Turnstile } from "@/components/ui/turnstile";
 import { clearCart, removeFromCart, setCartQuantity, useCartItems, useCartReady } from "@/lib/cart/store";
 import type { CheckoutState } from "@/lib/checkout";
 import { formatRsd } from "@/lib/format";
@@ -220,6 +222,8 @@ export function CheckoutView() {
             </label>
             {errors.terms ? <p className="text-caption text-accent">{errors.terms}</p> : null}
           </div>
+
+          <Turnstile action="checkout" resetKey={state} />
 
           <button type="submit" disabled={pending || isLoading} className={buttonClass("primary", "w-full")}>
             {pending ? "Porudžbina se obrađuje…" : "Potvrdi porudžbinu"}

@@ -1,6 +1,8 @@
+// src/emails/previews.tsx
 import type { ReactElement } from "react";
 
 import { InviteEmail, inviteSubject } from "./invite";
+import { LoginAlertEmail, loginAlertSubject } from "./login-alert";
 import { OrderConfirmationEmail, orderConfirmationSubject } from "./order-confirmation";
 import { OrderNotificationEmail, orderNotificationSubject } from "./order-notification";
 import { OrderShippedEmail, orderShippedSubject } from "./order-shipped";
@@ -35,5 +37,10 @@ export const EMAIL_PREVIEWS: Record<string, Preview> = {
     title: "Aktivacija naloga (pozivnica)",
     subject: inviteSubject,
     render: () => <InviteEmail {...InviteEmail.PreviewProps} />,
+  },
+  "nova-prijava": {
+    title: "Nova prijava na admin",
+    subject: loginAlertSubject,
+    render: () => <LoginAlertEmail {...LoginAlertEmail.PreviewProps} />,
   },
 };

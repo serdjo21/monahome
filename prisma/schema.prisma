@@ -332,6 +332,15 @@ model User {
   sessionVersion Int   @default(0)
   lastLoginAt  DateTime?
 
+  /// Dvofaktorska zaštita (obavezna za ADMIN). Ključ je šifrovan (src/server/auth/totp.ts);
+  /// postoji i pre potvrde, a uključena je tek kad je totpEnabledAt postavljen.
+  totpSecret    String?
+  totpEnabledAt DateTime?
+  /// Poslednji iskorišćen 30-sekundni korak: isti kod ne prolazi dva puta.
+  totpLastStep  Int?
+  /// Heševi rezervnih kodova; iskorišćen kod se briše iz liste.
+  backupCodes   String[]  @default([])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -381,4 +390,14 @@ model Page {
   seoDescription String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+/// Ograničenje broja zahteva po IP adresi (porudžbina, prijava, lozinka, newsletter).
+/// Ključ je „forma:heš IP adrese“; sama IP adresa se ne čuva. Istekli redovi se brišu sami (src/server/rate-limit.ts).
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
 }

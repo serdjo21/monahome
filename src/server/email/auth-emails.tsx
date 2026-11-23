@@ -1,6 +1,8 @@
+// src/server/email/auth-emails.tsx
 import "server-only";
 
 import { InviteEmail, inviteSubject } from "@/emails/invite";
+import { LoginAlertEmail, loginAlertSubject, type LoginAlertProps } from "@/emails/login-alert";
 import { PasswordResetEmail, passwordResetSubject } from "@/emails/password-reset";
 import type { Role } from "@/generated/prisma/enums";
 
@@ -29,5 +31,14 @@ export async function sendInviteEmail(to: string, link: string, name: string | n
     to,
     subject: inviteSubject,
     ...(await renderEmail(<InviteEmail link={link} email={to} name={name} roleLabel={ROLE_IN_SENTENCE[role]} />)),
+  });
+}
+
+/** Obaveštenje administratoru posle prijave na admin (vreme, uređaj, IP). */
+export async function sendLoginAlertEmail(props: LoginAlertProps) {
+  await sendEmail({
+    to: props.email,
+    subject: loginAlertSubject,
+    ...(await renderEmail(<LoginAlertEmail {...props} />)),
   });
 }

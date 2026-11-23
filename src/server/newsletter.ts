@@ -1,8 +1,10 @@
+// src/server/newsletter.ts
 "use server";
 
 import { z } from "zod";
 
 import { prisma } from "@/server/db";
+import { checkRateLimit } from "@/server/rate-limit";
 
 export type NewsletterState =
   | { status: "idle" }
@@ -30,6 +32,10 @@ export async function subscribeToNewsletter(_prev: NewsletterState, formData: Fo
       message: parsed.error.issues[0]?.message ?? "Unesite ispravnu e-mail adresu.",
       email: raw,
     };
+  }
+
+  if (!(await checkRateLimit("newsletter"))) {
+    return { status: "error", message: "Previše prijava sa Vaše mreže. Pokušajte ponovo kasnije.", email: raw };
   }
 
   try {

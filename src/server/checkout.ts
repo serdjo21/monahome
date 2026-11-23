@@ -1,3 +1,4 @@
+// src/server/checkout.ts
 "use server";
 
 import { randomBytes } from "node:crypto";
@@ -18,7 +19,9 @@ import {
 } from "@/lib/checkout";
 import { prisma } from "@/server/db";
 import { sendOrderEmails } from "@/server/email/order-emails";
+import { checkRateLimit } from "@/server/rate-limit";
 import { CACHE_TAGS } from "@/server/storefront";
+import { verifyTurnstile } from "@/server/turnstile";
 
 const itemsSchema = z
   .array(
@@ -163,6 +166,24 @@ export async function placeOrder(_previous: CheckoutState, formData: FormData): 
       status: "error",
       values,
       formError: "Korpa je prazna. Molimo Vas da osvežite stranicu i pokušate ponovo.",
+    };
+  }
+
+  // Previše porudžbina sa iste IP adrese. Broji se tek posle provere polja, da ispravke u formi ne troše limit.
+  if (!(await checkRateLimit("checkout"))) {
+    return {
+      status: "error",
+      values,
+      formError: "Sa Vaše mreže je poslato previše porudžbina u kratkom roku. Molimo Vas da pokušate ponovo za nekoliko minuta.",
+    };
+  }
+
+  // Cloudflare Turnstile: tek posle provere polja, da se token ne potroši na grešku u formi.
+  if (!(await verifyTurnstile(formData, "checkout"))) {
+    return {
+      status: "error",
+      values,
+      formError: "Bezbednosna provera nije uspela. Molimo Vas da sačekate nekoliko sekundi i ponovo potvrdite porudžbinu.",
     };
   }
 

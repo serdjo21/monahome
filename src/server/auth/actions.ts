@@ -1,7 +1,8 @@
+// src/server/auth/actions.ts
 "use server";
 
 import { redirect } from "next/navigation";
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth";
@@ -11,6 +12,8 @@ import { appOrigin } from "@/lib/site";
 import { createToken, hashPassword, hashToken } from "@/server/auth/password";
 import { prisma } from "@/server/db";
 import { sendPasswordResetEmail } from "@/server/email/auth-emails";
+import { checkRateLimit } from "@/server/rate-limit";
+import { verifyTurnstile } from "@/server/turnstile";
 
 const MAX_FAILED_LOGINS = 5;
 const LOCK_MINUTES = 15;
@@ -38,15 +41,31 @@ export async function login(_previous: FormState, formData: FormData): Promise<F
   }
   const email = emailParsed.data;
 
+  if (!(await checkRateLimit("login"))) {
+    return { error: "Previše pokušaja prijave sa Vaše mreže. Pokušajte ponovo za nekoliko minuta.", values };
+  }
+
+  if (!(await verifyTurnstile(formData, "login"))) {
+    return { error: "Bezbednosna provera nije uspela. Sačekajte nekoliko sekundi i pokušajte ponovo.", values };
+  }
+
   const since = new Date(Date.now() - LOCK_MINUTES * 60_000);
   const failed = await prisma.loginAttempt.count({ where: { email, success: false, createdAt: { gte: since } } });
   if (failed >= MAX_FAILED_LOGINS) {
     return { error: `Previše neuspešnih pokušaja. Pokušajte ponovo za ${LOCK_MINUTES} minuta.`, values };
   }
 
+  // Polje za kod postoji tek u drugom koraku; prazno znači „kod još nije unet“.
+  const code = String(formData.get("code") ?? "").trim();
+
   try {
-    await signIn("credentials", { email, password, redirect: false });
+    await signIn("credentials", { email, password, ...(code ? { code } : {}), redirect: false });
   } catch (error) {
+    // Kodovi grešaka iz src/auth.ts (TwoFactorRequired, TwoFactorInvalid).
+    if (error instanceof CredentialsSignin && error.code === "2fa_required") return { twoFactor: true, values };
+    if (error instanceof CredentialsSignin && error.code === "2fa_invalid") {
+      return { twoFactor: true, error: "Kod nije ispravan ili je već iskorišćen. Unesite novi kod.", values };
+    }
     if (error instanceof AuthError) {
       // Pogrešan mejl ili lozinka je očekivana greška; sve ostalo je kvar koji treba videti u logu.
       if (error.type === "CredentialsSignin") return { error: "Pogrešan e-mail ili lozinka.", values };
@@ -69,6 +88,20 @@ export async function requestPasswordReset(_previous: FormState, formData: FormD
   const parsed = emailSchema.safeParse(formData.get("email"));
   if (!parsed.success) {
     return { fieldErrors: { email: "Unesite ispravnu e-mail adresu." }, values: { email: String(formData.get("email") ?? "") } };
+  }
+
+  if (!(await checkRateLimit("password_reset"))) {
+    return {
+      error: "Previše zahteva sa Vaše mreže. Pokušajte ponovo za sat vremena.",
+      values: { email: String(formData.get("email") ?? "") },
+    };
+  }
+
+  if (!(await verifyTurnstile(formData, "password_reset"))) {
+    return {
+      error: "Bezbednosna provera nije uspela. Sačekajte nekoliko sekundi i pokušajte ponovo.",
+      values: { email: String(formData.get("email") ?? "") },
+    };
   }
 
   const done: FormState = {
